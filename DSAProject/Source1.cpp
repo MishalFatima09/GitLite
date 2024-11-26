@@ -3,6 +3,8 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <filesystem> // Add this for file system operations
+namespace fs = std::filesystem;
 using namespace std;
 
 // Instructor Hash Class
@@ -178,6 +180,188 @@ private:
         return node;
     }
 
+
+    //created a function to delete node 
+    //JUST YOUR STANDARD NODE DELTION IN AVL ALONG WITH THE UPDATE HASH AND HEIGHT
+
+    AVLNode* deleteNode(AVLNode* node, const string& key) {
+        if (node == nullptr) {
+            return node; // Key not found
+        }
+
+        // Step 1: Perform standard BST deletion
+        if (key < node->key) {
+            node->left = deleteNode(node->left, key);
+        }
+        else if (key > node->key) {
+            node->right = deleteNode(node->right, key);
+        }
+        else {
+            // Node found, handle deletion
+            string fileName = node->key + ".txt";
+            if (fs::exists(fileName)) {
+                fs::remove(fileName); // Delete the corresponding file
+                cout << "Deleted file: " << fileName << endl;
+            }
+            else {
+                cout << "File not found: " << fileName << endl;
+            }
+
+            // Node with only one child or no child
+            if ((node->left == nullptr) || (node->right == nullptr)) {
+                AVLNode* temp = node->left ? node->left : node->right;
+
+                // No child case
+                if (temp == nullptr) {
+                    temp = node;
+                    node = nullptr;
+                }
+                else { // One child case
+                    *node = *temp; // Copy the contents of the non-empty child
+                }
+                delete temp;
+            }
+            else {
+                // Node with two children: Get the in-order successor
+                AVLNode* temp = getMinValueNode(node->right);
+
+                // Copy the in-order successor's data to this node
+                node->key = temp->key;
+                node->hashValue = temp->hashValue;
+
+                // Delete the in-order successor
+                node->right = deleteNode(node->right, temp->key);
+            }
+        }
+
+        // If the tree had only one node then return
+        if (node == nullptr) {
+            return node;
+        }
+
+        // Step 2: Update height and hash of the current node
+        updateHeight(node);
+        updateHash(node);
+
+        // Step 3: Get the balance factor
+        int balance = getBalance(node);
+
+        // Step 4: Rebalance the tree
+
+        // Left-Left Case
+        if (balance > 1 && getBalance(node->left) >= 0) {
+            return rightRotate(node);
+        }
+
+        // Left-Right Case
+        if (balance > 1 && getBalance(node->left) < 0) {
+            node->left = leftRotate(node->left);
+            return rightRotate(node);
+        }
+
+        // Right-Right Case
+        if (balance < -1 && getBalance(node->right) <= 0) {
+            return leftRotate(node);
+        }
+
+        // Right-Left Case
+        if (balance < -1 && getBalance(node->right) > 0) {
+            node->right = rightRotate(node->right);
+            return leftRotate(node);
+        }
+
+        return node;
+    }
+
+    // Helper function to find the node with the smallest key in a subtree
+    AVLNode* getMinValueNode(AVLNode* node) {
+        AVLNode* current = node;
+
+        // Loop down to find the leftmost leaf
+        while (current->left != nullptr) {
+            current = current->left;
+        }
+        return current;
+    }
+
+
+    // Update an existing node's key (and hash) in the AVL Tree
+    //I dont exactly understand what they mean by updating but for now this function can be used to rename the txt file
+    AVLNode* updateNode(AVLNode* node, const string& oldKey, const string& newKey) {
+        if (node == nullptr) {
+            return nullptr; // Node not found
+        }
+
+        // Locate the node to update
+        if (oldKey < node->key) {
+            node->left = updateNode(node->left, oldKey, newKey);
+        }
+        else if (oldKey > node->key) {
+            node->right = updateNode(node->right, oldKey, newKey);
+        }
+        else {
+            // Node found, update it
+            cout << "Updating node: " << node->key << " to " << newKey << endl;
+
+            // Rename the associated file
+            string oldFileName = oldKey + ".txt";
+            string newFileName = newKey + ".txt";
+
+            if (fs::exists(oldFileName)) {
+                fs::rename(oldFileName, newFileName); // Rename the file
+                cout << "Renamed file: " << oldFileName << " to " << newFileName << endl;
+            }
+            else {
+                cout << "File not found: " << oldFileName << endl;
+            }
+
+            // Update the key
+            node->key = newKey;
+            // Recompute the hash value for the updated key
+            node->hashValue = hasher.computeHash(newKey);
+            cout << "Updated hash: " << node->hashValue << endl;
+
+            // Recalculate height and hash for all affected ancestors
+            updateHeight(node);
+            updateHash(node);
+        }
+
+        // Ensure the AVL tree remains balanced
+        int balance = getBalance(node);
+
+        // Left-Left Case
+        if (balance > 1 && newKey < node->left->key) {
+            return rightRotate(node);
+        }
+
+        // Right-Right Case
+        if (balance < -1 && newKey > node->right->key) {
+            return leftRotate(node);
+        }
+
+        // Left-Right Case
+        if (balance > 1 && newKey > node->left->key) {
+            node->left = leftRotate(node->left);
+            return rightRotate(node);
+        }
+
+        // Right-Left Case
+        if (balance < -1 && newKey < node->right->key) {
+            node->right = rightRotate(node);
+            return leftRotate(node);
+        }
+
+        return node;
+    }
+
+   
+
+
+
+
+
+
+
     // makes every node a txt file w key hash left right data in it
     void saveNodeToFile(AVLNode* node)
     {
@@ -216,7 +400,25 @@ public:
     int getRootHash() {
         return root ? root->hashValue : 0;
     }
+
+
+    void deletion(string& key)
+    {
+
+        root = deleteNode(root, key);
+    }
+
+
+    // Function to update starting from the root
+    void update(const string& oldKey, const string& newKey) {
+        root = updateNode(root, oldKey, newKey);
+    }
 };
+
+
+//creating a tree as global
+AVLTree tree;
+
 
 // GitLite Class
 class GitLite {
@@ -239,6 +441,8 @@ private:
         result.push_back(line.substr(start)); // Add the last token
         return result;
     }
+
+
 
     void readCSVColumns()
     {
@@ -316,8 +520,9 @@ public:
 
         // Step 4: Create the Tree and insert keys 
         //AVL CASE:
+       
         if (treeType == "AVL" || treeType == "avl") {
-            AVLTree tree;
+            //AVLTree tree;
             ifstream file(fileName);
             if (!file) {
                 cerr << "Error: Unable to open file " << fileName << endl;
@@ -327,6 +532,7 @@ public:
             // Skip header line
             string line;
             getline(file, line);
+            system("cls");
 
             // Insert keys from the selected column into the tree
             while (getline(file, line)) {
@@ -372,6 +578,20 @@ int main() {
     cin >> fileName;
 
     gitLite.initRepository(fileName);
+
+    string deleteName;
+    cout << "Enter the key of the file to delete: ";
+    cin >> deleteName;
+    //???
+   // gitLite.tre
+    tree.deletion(deleteName);
+
+    string oldName, newName;
+    cout << "Enter the key of the file to change: ";
+    cin >> oldName;
+    cout << "Enter the new name: ";
+    cin >> newName;
+    tree.update(oldName, newName);
 
     return 0;
 }

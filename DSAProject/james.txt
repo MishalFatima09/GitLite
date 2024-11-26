@@ -1,0 +1,4 @@
+Key: jim
+Hash: 11
+Left: dwight
+Right: kevin
