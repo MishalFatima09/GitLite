@@ -1,0 +1,5 @@
+File: E:\smallcsvfile.csv
+Tree Type: avl
+Hash Method: Instructor Hash
+Selected Column: name
+Merkle Root Hash: 7
