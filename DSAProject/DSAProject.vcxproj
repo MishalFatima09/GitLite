@@ -133,9 +133,6 @@
     <ClCompile Include="Source1.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="AVLclass.h" />
-    <ClInclude Include="GitLite.h" />
-    <ClInclude Include="Hasher.h" />
     <ClInclude Include="Myvector.h" />
     <ClInclude Include="RBtree.h" />
   </ItemGroup>
