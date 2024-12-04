@@ -1,0 +1,5 @@
+File: C:\Users\hp\Downloads\smallcsvfile.csv
+Tree Type: AVL
+Hash Method: Instructor Hash
+Selected Column: age
+Merkle Root Hash: 20

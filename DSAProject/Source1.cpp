@@ -201,11 +201,18 @@ public:
     }
 };
 
+
 class GitLite {
 private:
-    string fileName;
-    string treeType = "AVL";
-    vector<string> columnNames;
+    struct Repository 
+    {
+        string name;
+        MerkleAVLTree tree;
+        string directory;
+    };
+
+    map<string, Repository> repositories; // Manage multiple repositories by name
+    string currentRepository; // Name of the active repository
 
     vector<string> splitLine(const string& line) {
         vector<string> result;
@@ -219,7 +226,7 @@ private:
         return result;
     }
 
-    void readCSVColumns() {
+    void readCSVColumns(const string& fileName, vector<string>& columnNames) {
         ifstream file(fileName);
         if (!file) {
             cerr << "Error: Unable to open file " << fileName << endl;
@@ -233,7 +240,7 @@ private:
         file.close();
     }
 
-    int getColumnSelection() {
+    int getColumnSelection(const vector<string>& columnNames) {
         cout << "Available columns in the dataset:" << endl;
         for (size_t i = 0; i < columnNames.size(); ++i) {
             cout << i + 1 << ". " << columnNames[i] << endl;
@@ -249,57 +256,147 @@ private:
     }
 
 public:
-    void initRepository(const string& inputFileName) {
-        fileName = inputFileName;
+    void initRepository(const string& repoName, const string& inputFileName) {
+        if (repositories.find(repoName) != repositories.end()) {
+            cout << "Repository " << repoName << " already exists." << endl;
+            return;
+        }
 
-        cout << "Initializing repository with file: " << fileName << endl;
-
-        readCSVColumns();
+        vector<string> columnNames;
+        readCSVColumns(inputFileName, columnNames);
         if (columnNames.empty()) {
             cerr << "Error: No columns found in the dataset." << endl;
             return;
         }
 
-        int columnIndex = getColumnSelection();
+        int columnIndex = getColumnSelection(columnNames);
 
         MerkleAVLTree tree;
-        ifstream file(fileName);
+        ifstream file(inputFileName);
         if (!file) {
-            cerr << "Error: Unable to open file " << fileName << endl;
+            cerr << "Error: Unable to open file " << inputFileName << endl;
             return;
         }
 
         string line;
-        getline(file, line);
+        getline(file, line); // Skip the header
 
         while (getline(file, line)) {
             vector<string> row = splitLine(line);
-            if (columnIndex < static_cast<int>(row.size())) 
-            {
-                cout <<"insertion: " << row[columnIndex] << " ";
-                tree.insert(row[columnIndex], "main-branch");
+            if (columnIndex < static_cast<int>(row.size())) {
+                tree.insert(row[columnIndex], repoName + "-branch"); // Use branch name as directory
             }
         }
 
-        int rootHash = tree.getRootHash();
-        cout << "Merkle Root Hash: " << rootHash << endl;
-
-        // Print the tree structure
-        cout << "\nTree Structure: " << endl;
-        tree.print();
-
         file.close();
+
+        // Save repository details
+        Repository newRepo = { repoName, tree, repoName + "-branch" };
+        repositories[repoName] = newRepo;
+        currentRepository = repoName;
+
+        cout << "Initialized repository: " << repoName << endl;
+        cout << "Merkle Root Hash: " << tree.getRootHash() << endl;
+    }
+
+    void listRepositories() {
+        if (repositories.empty()) {
+            cout << "No repositories initialized yet." << endl;
+            return;
+        }
+
+        cout << "Repositories:" << endl;
+        for (const auto& [name, repo] : repositories) {
+            cout << "- " << name << endl;
+        }
+    }
+
+    void switchRepository(const string& repoName) {
+        if (repositories.find(repoName) == repositories.end()) {
+            cout << "Repository " << repoName << " not found." << endl;
+            return;
+        }
+
+        currentRepository = repoName;
+        cout << "Switched to repository: " << repoName << endl;
+    }
+
+    void deleteRepository(const string& repoName) {
+        auto it = repositories.find(repoName);
+        if (it == repositories.end()) {
+            cout << "Repository " << repoName << " not found." << endl;
+            return;
+        }
+
+        // Remove directory from file system
+        filesystem::remove_all(it->second.directory);
+
+        repositories.erase(it);
+        if (currentRepository == repoName) {
+            currentRepository.clear();
+        }
+        cout << "Deleted repository: " << repoName << endl;
+    }
+
+    void showCurrentRepository() {
+        if (currentRepository.empty()) {
+            cout << "No active repository." << endl;
+        }
+        else {
+            cout << "Current repository: " << currentRepository << endl;
+        }
+    }
+
+    void printCurrentTree() {
+        if (currentRepository.empty()) {
+            cout << "No active repository to display." << endl;
+            return;
+        }
+
+        repositories[currentRepository].tree.print();
     }
 };
 
 int main() {
     GitLite gitLite;
-    string fileName;
 
-    cout << "Enter the name of the CSV file to initialize the repository: ";
-    cin >> fileName;
+    while (true) {
+        string command;
+        cout << "> ";
+        getline(cin, command);
 
-    gitLite.initRepository(fileName);
+        if (command.find("init ") == 0) {
+            string repoName, fileName;
+            cout << "Enter repository name: ";
+            cin >> repoName;
+            cout << "Enter CSV file path: ";
+            cin >> fileName;
+            gitLite.initRepository(repoName, fileName);
+        }
+        else if (command == "list-repos") {
+            gitLite.listRepositories();
+        }
+        else if (command.find("switch ") == 0) {
+            string repoName = command.substr(7);
+            gitLite.switchRepository(repoName);
+        }
+        else if (command.find("delete ") == 0) {
+            string repoName = command.substr(7);
+            gitLite.deleteRepository(repoName);
+        }
+        else if (command == "current-repo") {
+            gitLite.showCurrentRepository();
+        }
+        else if (command == "print-tree") {
+            gitLite.printCurrentTree();
+        }
+        else if (command == "exit") {
+            break;
+        }
+        else {
+            cout << "Unknown command. Try init, list-repos, switch, delete, current-repo, print-tree, or exit." << endl;
+        }
+    }
 
     return 0;
 }

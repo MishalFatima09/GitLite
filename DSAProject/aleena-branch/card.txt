@@ -1,0 +1,4 @@
+Key: card
+Hash: 3
+Left: NULL
+Right: money

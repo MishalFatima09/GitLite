@@ -1,0 +1,4 @@
+Key: 13
+Hash: 5
+Left: NULL
+Right: NULL

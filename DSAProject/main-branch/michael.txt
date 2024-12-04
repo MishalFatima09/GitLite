@@ -1,0 +1,4 @@
+Key: michael
+Hash: 25
+Left: NULL
+Right: pam
