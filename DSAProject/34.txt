@@ -1,0 +1,4 @@
+Key: 34
+Hash: 20
+Left: 33
+Right: 44

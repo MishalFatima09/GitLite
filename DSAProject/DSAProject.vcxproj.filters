@@ -29,5 +29,8 @@
     <ClInclude Include="RBtree.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\ProjectRoughWork\ProjectRoughWork\MyString.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

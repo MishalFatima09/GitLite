@@ -1,4 +1,5 @@
 ﻿  Source1.cpp
-  idce.cpp
-  Generating Code...
-  DSAProject.vcxproj -> C:\Users\hp\source\repos\DSAProject\x64\Debug\DSAProject.exe
+C:\Visual Studio 2022\DSA Labs\ProjectRoughWork\ProjectRoughWork\MyString.h(62,20): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+  (compiling source file 'Source1.cpp')
+  
+  DSAProject.vcxproj -> C:\Visual Studio 2022\DSA Labs\Project\DSAProject\x64\Debug\DSAProject.exe

@@ -1,0 +1,4 @@
+Key: f
+Hash: 6
+Left: NULL
+Right: m

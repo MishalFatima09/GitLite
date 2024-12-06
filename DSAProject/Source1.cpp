@@ -1,7 +1,8 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
-#include <string>
+#include "C:\Visual Studio 2022\DSA Labs\ProjectRoughWork\ProjectRoughWork\MyString.h"
+//#include <string>
 #include <map>
 using namespace std;
 
@@ -20,7 +21,7 @@ public:
     }
 
     // Compute Instructor Hash for a string
-    int computeHash(const string& str)
+    int computeHash(const MyString& str)
     {
 
         //int hashValue = 1;
@@ -30,7 +31,7 @@ public:
         }
         */
         int hashValue = 1; // Start with an initial hash value of 1
-        for (size_t i = 0; i < str.length(); i++) {
+        for (size_t i = 0; i < str.getlength(); i++) {
             int asciiValue = static_cast<int>(str[i]); // Get the ASCII value of the character at index i
             hashValue = (hashValue * asciiValue) % 29; // Multiply and take modulo 29
         }
@@ -41,14 +42,14 @@ public:
 //AVL CLASS with additional member: hash value per node
 struct AVLNode
 {
-    string key;        // Key for this node
+    MyString key;        // Key for this node
     int hashValue;     // Hash value for this node
     AVLNode* left;
     AVLNode* right;
     int height;
 
     // Constructor
-    AVLNode(string k, int h) : key(k), hashValue(h), left(nullptr), right(nullptr), height(1) {}
+    AVLNode(MyString k, int h) : key(k), hashValue(h), left(nullptr), right(nullptr), height(1) {}
 };
 
 
@@ -76,7 +77,7 @@ private:
         // Internal node: hash combines left and right child hashes
         else
         {
-            string combined = (node->left ? to_string(node->left->hashValue) : "") +
+            MyString combined = (node->left ? to_string(node->left->hashValue) : "") +
                 (node->right ? to_string(node->right->hashValue) : "");
             node->hashValue = hasher.computeHash(combined);
         }
@@ -126,7 +127,7 @@ private:
         return y;
     }
 
-    AVLNode* insertNode(AVLNode* node, const string& key)
+    AVLNode* insertNode(AVLNode* node, const MyString& key)
     {
         if (node == nullptr) {
             int hash = hasher.computeHash(key); // Compute hash using Instructor Hash
@@ -183,8 +184,8 @@ private:
     {
         if (node == nullptr) return;
 
-        string fileName = node->key + ".txt";
-        ofstream file(fileName);
+        MyString fileName = node->key + ".txt";
+        ofstream file(fileName.c_str());
         if (file) {
             file << "Key: " << node->key << endl;
             file << "Hash: " << node->hashValue << endl;
@@ -203,7 +204,7 @@ public:
     AVLTree() : root(nullptr) {}
 
     // Insert a key into the AVL tree
-    void insert(const string& key) {
+    void insert(const MyString& key) {
         root = insertNode(root, key);
     }
 
@@ -221,15 +222,15 @@ public:
 // GitLite Class
 class GitLite {
 private:
-    string fileName;
-    string treeType;
-    string hashMethod;
+    MyString fileName;
+    MyString treeType;
+    MyString hashMethod;
     int bTreeOrder = 0;
-    vector<string> columnNames;
+    vector<MyString> columnNames;
 
     // Helper function to split a line by commas
-    vector<string> splitLine(const string& line) {
-        vector<string> result;
+    vector<MyString> splitLine(const MyString& line) {
+        vector<MyString> result;
         size_t start = 0, end = 0;
 
         while ((end = line.find(',', start)) != string::npos) {
@@ -242,15 +243,15 @@ private:
 
     void readCSVColumns()
     {
-        ifstream file(fileName);
+        ifstream file(fileName.c_str());
         if (!file) {
             cerr << "Error: Unable to open file " << fileName << endl;
             return;
         }
 
         // Read the first line to extract column names
-        string headerLine;
-        if (getline(file, headerLine)) {
+        MyString headerLine;
+        if (getLine(file, headerLine)) {
             columnNames = splitLine(headerLine);
         }
         file.close();
@@ -294,7 +295,7 @@ private:
     }
 
 public:
-    void initRepository(const string& inputFileName)
+    void initRepository(const MyString& inputFileName)
     {
         fileName = inputFileName;
 
@@ -318,19 +319,19 @@ public:
         //AVL CASE:
         if (treeType == "AVL" || treeType == "avl") {
             AVLTree tree;
-            ifstream file(fileName);
+            ifstream file(fileName.c_str());
             if (!file) {
                 cerr << "Error: Unable to open file " << fileName << endl;
                 return;
             }
 
             // Skip header line
-            string line;
-            getline(file, line);
+            MyString line;
+            getLine(file, line);
 
             // Insert keys from the selected column into the tree
-            while (getline(file, line)) {
-                vector<string> row = splitLine(line);
+            while (getLine(file, line)) {
+                vector<MyString> row = splitLine(line);
                 if (columnIndex < static_cast<int>(row.size()))
                 {
                     tree.insert(row[columnIndex]);
@@ -365,7 +366,7 @@ public:
 
 int main() {
     GitLite gitLite;
-    string fileName;
+    MyString fileName;
 
     // Event loop for command simulation
     cout << "Enter the name of the CSV file to initialize the repository: ";

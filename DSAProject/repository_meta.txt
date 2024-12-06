@@ -1,0 +1,5 @@
+File: C:\Users\aleen\Downloads\smallcsvfile.csv
+Tree Type: avl
+Hash Method: Instructor Hash
+Selected Column: age
+Merkle Root Hash: 20
