@@ -209,9 +209,9 @@ public:
         saveNodeToFile(node, dir);
     }
 
-    int getRootHash() override {
+    /*int getRootHash() override {
         return root ? root->hashValue : 0;
-    }
+    }*/
 
     void print() override {
         printTree(root, "");

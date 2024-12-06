@@ -173,9 +173,9 @@ public:
     }
 
     // Override getRootHash method
-    int getRootHash() override {
-        return root ? root->hashValue : 0;
-    }
+  //  int getRootHash() override {
+     /*   return root ? root->hashValue : 0;
+    }*/
 
     // Override print method
     void print() override {

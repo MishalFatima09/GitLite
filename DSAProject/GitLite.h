@@ -7,6 +7,7 @@
 #include <filesystem> 
 #include"AVLTree.h"
 #include"RBtree.h"
+#include"Btree.h"
 using namespace std;
 
 
@@ -25,12 +26,15 @@ private:
 
     //adding creation of tree
 
-    ColBasedTree* createTree(const string& type) {
+    ColBasedTree* createTree(const string& type, int t = 3) {
         if (type == "AVL") {
             return new MerkleAVLTree();
         }
         else if (type == "RBTree") {
-            return new RBTree(); // Implement this class
+            return new RBTree();
+        }
+        else if (type == "BTree") {
+            return new Btree(t);
         }
         else {
             cerr << "Unknown tree type. Defaulting to AVL." << endl;
@@ -122,51 +126,8 @@ public:
         loadMetadata(); // Load repository metadata at startup
     }
 
-    /* void initRepository(const string& repoName, const string& inputFileName) {
-         if (repositories.find(repoName) != repositories.end()) {
-             cout << "Repository " << repoName << " already exists." << endl;
-             return;
-         }
 
-         vector<string> columnNames;
-         readCSVColumns(inputFileName, columnNames);
-         if (columnNames.empty()) {
-             cerr << "Error: No columns found in the dataset." << endl;
-             return;
-         }
-
-         int columnIndex = getColumnSelection(columnNames);
-
-         MerkleAVLTree tree;
-         ifstream file(inputFileName);
-         if (!file) {
-             cerr << "Error: Unable to open file " << inputFileName << endl;
-             return;
-         }
-
-         string line;
-         getline(file, line); // Skip the header
-
-         while (getline(file, line)) {
-             vector<string> row = splitLine(line);
-             if (columnIndex < static_cast<int>(row.size())) {
-                 tree.insert(row[columnIndex], repoName + "-branch"); // Use branch name as directory
-             }
-         }
-
-         file.close();
-
-         // Save repository details
-         Repository newRepo = { repoName, tree, repoName + "-branch" };
-         repositories[repoName] = newRepo;
-         currentRepository = repoName;
-
-         cout << "Initialized repository: " << repoName << endl;
-         cout << "Merkle Root Hash: " << tree.getRootHash() << endl;
-     }
-     */
-
-    void initRepository(const string& repoName, const string& inputFileName, const string& treeType) {
+    void initRepository(const string& repoName, const string& inputFileName, const string& treeType, int t) {
         if (repositories.find(repoName) != repositories.end()) {
             cout << "Repository " << repoName << " already exists." << endl;
             return;
@@ -210,7 +171,7 @@ public:
 
         saveMetadata(); // Save metadata after initializing a repository
         cout << "Initialized repository: " << repoName << endl;
-        cout << "Merkle Root Hash: " << tree->getRootHash() << endl;
+       // cout << "Merkle Root Hash: " << tree->getRootHash() << endl;
     }
 
 
@@ -251,6 +212,9 @@ public:
         if (currentRepository == repoName) {
             currentRepository.clear();
         }
+
+        saveMetadata();
+
         cout << "Deleted repository: " << repoName << endl;
     }
 

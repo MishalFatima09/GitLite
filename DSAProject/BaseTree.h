@@ -10,7 +10,6 @@ using namespace std;
 class ColBasedTree {
 public:
     virtual void insert(const string& key, const string& dir) = 0;
-    virtual int getRootHash() = 0;
     virtual void print() = 0;
     virtual ~ColBasedTree() = default;
 };

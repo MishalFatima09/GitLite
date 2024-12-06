@@ -21,13 +21,28 @@ int main() {
 
         if (command.find("init ") == 0) {
             string repoName, fileName, treeType;
+            int t = 3; // Default minimum degree for BTree
+
+            // Collect repository information
             cout << "Enter repository name: ";
             cin >> repoName;
             cout << "Enter CSV file path: ";
             cin >> fileName;
             cout << "Enter tree type (AVL, BTree, RBTree): ";
             cin >> treeType;
-            gitLite.initRepository(repoName, fileName, treeType);
+
+            // Handle BTree-specific input
+            if (treeType == "BTree") {
+                cout << "Enter minimum degree for BTree (t): ";
+                cin >> t;
+                if (t < 2) {
+                    cerr << "Minimum degree must be at least 2. Defaulting to 3." << endl;
+                    t = 3;
+                }
+            }
+
+            // Call the appropriate GitLite method
+            gitLite.initRepository(repoName, fileName, treeType, t);
         }
         else if (command == "list-repos") {
             gitLite.listRepositories();
