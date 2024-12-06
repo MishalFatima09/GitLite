@@ -46,6 +46,14 @@ int main() {
         else if (command == "print-tree") {
             gitLite.printCurrentTree();
         }
+        else if (command.find("branch ") == 0) {
+            string branchName = command.substr(7);
+            gitLite.createBranch(branchName);
+        }
+        else if (command.find("checkout ") == 0) {
+            string branchName = command.substr(9);
+            gitLite.checkoutBranch(branchName);
+        }
         else if (command == "exit") {
             break;
         }
@@ -56,3 +64,5 @@ int main() {
 
     return 0;
 }
+
+

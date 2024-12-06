@@ -21,6 +21,7 @@ private:
 
     map<string, Repository> repositories; // Manage multiple repositories by name
     string currentRepository; // Name of the active repository
+    const string metadataFile = "repositories_metadata.txt";
 
     //adding creation of tree
 
@@ -36,6 +37,44 @@ private:
             return new MerkleAVLTree();
         }
     }
+    /////////////////////////////////////////
+    /////////    META DATA STUFF   //////////
+    /////////////////////////////////////////
+
+
+
+    void saveMetadata() {
+        ofstream out(metadataFile);
+        if (!out) {
+            cerr << "Error: Unable to save metadata." << endl;
+            return;
+        }
+
+        for (const auto& [name, repo] : repositories) {
+            out << name << "," << repo.directory << endl;
+        }
+        out.close();
+    }
+
+    void loadMetadata() {
+        ifstream in(metadataFile);
+        if (!in) {
+            cerr << "No metadata file found. Starting fresh." << endl;
+            return;
+        }
+
+        string line;
+        while (getline(in, line)) {
+            size_t pos = line.find(',');
+            if (pos != string::npos) {
+                string name = line.substr(0, pos);
+                string directory = line.substr(pos + 1);
+                repositories[name] = { name, nullptr, directory };
+            }
+        }
+        in.close();
+    }
+
 
     vector<string> splitLine(const string& line) {
         vector<string> result;
@@ -79,49 +118,53 @@ private:
     }
 
 public:
-   /* void initRepository(const string& repoName, const string& inputFileName) {
-        if (repositories.find(repoName) != repositories.end()) {
-            cout << "Repository " << repoName << " already exists." << endl;
-            return;
-        }
-
-        vector<string> columnNames;
-        readCSVColumns(inputFileName, columnNames);
-        if (columnNames.empty()) {
-            cerr << "Error: No columns found in the dataset." << endl;
-            return;
-        }
-
-        int columnIndex = getColumnSelection(columnNames);
-
-        MerkleAVLTree tree;
-        ifstream file(inputFileName);
-        if (!file) {
-            cerr << "Error: Unable to open file " << inputFileName << endl;
-            return;
-        }
-
-        string line;
-        getline(file, line); // Skip the header
-
-        while (getline(file, line)) {
-            vector<string> row = splitLine(line);
-            if (columnIndex < static_cast<int>(row.size())) {
-                tree.insert(row[columnIndex], repoName + "-branch"); // Use branch name as directory
-            }
-        }
-
-        file.close();
-
-        // Save repository details
-        Repository newRepo = { repoName, tree, repoName + "-branch" };
-        repositories[repoName] = newRepo;
-        currentRepository = repoName;
-
-        cout << "Initialized repository: " << repoName << endl;
-        cout << "Merkle Root Hash: " << tree.getRootHash() << endl;
+    GitLite() {
+        loadMetadata(); // Load repository metadata at startup
     }
-    */
+
+    /* void initRepository(const string& repoName, const string& inputFileName) {
+         if (repositories.find(repoName) != repositories.end()) {
+             cout << "Repository " << repoName << " already exists." << endl;
+             return;
+         }
+
+         vector<string> columnNames;
+         readCSVColumns(inputFileName, columnNames);
+         if (columnNames.empty()) {
+             cerr << "Error: No columns found in the dataset." << endl;
+             return;
+         }
+
+         int columnIndex = getColumnSelection(columnNames);
+
+         MerkleAVLTree tree;
+         ifstream file(inputFileName);
+         if (!file) {
+             cerr << "Error: Unable to open file " << inputFileName << endl;
+             return;
+         }
+
+         string line;
+         getline(file, line); // Skip the header
+
+         while (getline(file, line)) {
+             vector<string> row = splitLine(line);
+             if (columnIndex < static_cast<int>(row.size())) {
+                 tree.insert(row[columnIndex], repoName + "-branch"); // Use branch name as directory
+             }
+         }
+
+         file.close();
+
+         // Save repository details
+         Repository newRepo = { repoName, tree, repoName + "-branch" };
+         repositories[repoName] = newRepo;
+         currentRepository = repoName;
+
+         cout << "Initialized repository: " << repoName << endl;
+         cout << "Merkle Root Hash: " << tree.getRootHash() << endl;
+     }
+     */
 
     void initRepository(const string& repoName, const string& inputFileName, const string& treeType) {
         if (repositories.find(repoName) != repositories.end()) {
@@ -134,7 +177,7 @@ public:
         readCSVColumns(inputFileName, columnNames);
         if (columnNames.empty()) {
             cerr << "Error: No columns found in the dataset." << endl;
-            delete tree; // Clean up memory
+            delete tree;
             return;
         }
 
@@ -142,7 +185,7 @@ public:
         ifstream file(inputFileName);
         if (!file) {
             cerr << "Error: Unable to open file " << inputFileName << endl;
-            delete tree; // Clean up memory
+            delete tree;
             return;
         }
 
@@ -151,18 +194,25 @@ public:
         while (getline(file, line)) {
             vector<string> row = splitLine(line);
             if (columnIndex < static_cast<int>(row.size())) {
-                tree->insert(row[columnIndex], repoName + "-branch");
+                tree->insert(row[columnIndex], repoName + "-repo");
             }
         }
         file.close();
 
-        Repository newRepo = { repoName, tree, repoName + "-branch" };
+        string directory = repoName + "-repo";
+        if (!filesystem::exists(directory)) {
+            filesystem::create_directory(directory);
+        }
+
+        Repository newRepo = { repoName, tree, directory };
         repositories[repoName] = newRepo;
         currentRepository = repoName;
 
+        saveMetadata(); // Save metadata after initializing a repository
         cout << "Initialized repository: " << repoName << endl;
         cout << "Merkle Root Hash: " << tree->getRootHash() << endl;
     }
+
 
 
     void listRepositories() {
@@ -229,4 +279,54 @@ public:
         repositories[currentRepository].tree->print(); // Use pointer-to-base for flexibility
     }
 
+    /////////////////////////////////////////////////////
+  ///////////////     BRANCHING WORK      /////////////
+  /////////////////////////////////////////////////////
+    void createBranch(const string& branchName) {
+        if (repositories.empty()) {
+            cout << "No repository initialized yet. Use `init` first." << endl;
+            return;
+        }
+        if (branchName.empty()) {
+            cout << "Branch name cannot be empty." << endl;
+            return;
+        }
+
+        string repoDirectory = repositories[currentRepository].directory;
+        string branchPath = repoDirectory + "/" + branchName;
+
+        if (filesystem::exists(branchPath)) {
+            cout << "Branch '" << branchName << "' already exists in the repository." << endl;
+            return;
+        }
+
+        // Create the branch folder inside the repository directory
+        filesystem::create_directory(branchPath);
+
+        // Copy the repository's current contents into the branch folder
+        for (const auto& file : filesystem::directory_iterator(repoDirectory))
+        {
+            if (file.path().filename() != branchName) { // Avoid copying the branch folder into itself
+                string destination = branchPath + "/" + file.path().filename().string();
+                filesystem::copy(file.path(), destination, filesystem::copy_options::overwrite_existing);
+            }
+        }
+
+        cout << "Branch '" << branchName << "' created successfully in repository '" << currentRepository << "'." << endl;
+    }
+
+    void checkoutBranch(const string& branchName) {
+        string repoDirectory = repositories[currentRepository].directory;
+        string branchPath = repoDirectory + "/" + branchName;
+
+        if (!filesystem::exists(branchPath)) {
+            cout << "Branch '" << branchName << "' does not exist in repository '" << currentRepository << "'." << endl;
+            return;
+        }
+
+        // Update the repository directory to point to the branch folder
+        repositories[currentRepository].directory = branchPath;
+
+        cout << "Switched to branch '" << branchName << "' inside repository '" << currentRepository << "'." << endl;
+    }
 };
