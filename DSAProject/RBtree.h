@@ -1,325 +1,219 @@
 #include <iostream>
+#include <fstream>
+#include <string>
+#include <filesystem>
+#include "BaseTree.h" 
+#include "Hasher.h"   // For hashing logic
+
 using namespace std;
 
-// Node structure for the Red-Black Tree
-struct RBNode {
-    int value;
-    bool color; // Red = true, Black = false
-    RBNode* leftChild;
-    RBNode* rightChild;
-    RBNode* parentNode;
+enum Color { RED, BLACK };
 
-    RBNode(int value)
-        : value(value), color(true), leftChild(nullptr), rightChild(nullptr), parentNode(nullptr) {}
+// Red-Black Tree Node Structure
+struct RBNode {
+    string key;
+    int hashValue;
+    Color color; // RED or BLACK
+    RBNode* left;
+    RBNode* right;
+    RBNode* parent;
+
+    RBNode(string k, int h, Color c) : key(k), hashValue(h), color(c), left(nullptr), right(nullptr), parent(nullptr) {}
 };
 
-// Red-Black Tree class
-class RBTree {
+class RBTree : public ColBasedTree {
 private:
     RBNode* root;
-    RBNode* sentinel;
+    RBNode* TNULL; // Sentinel node for null references
+    InstructorHash hasher;
 
-    // Rotate left function
-    void rotateLeft(RBNode* node) {
-        RBNode* temp = node->rightChild;
-        node->rightChild = temp->leftChild;
-        if (temp->leftChild != sentinel) {
-            temp->leftChild->parentNode = node;
-        }
-        temp->parentNode = node->parentNode;
-        if (node->parentNode == nullptr) {
-            root = temp;
-        }
-        else if (node == node->parentNode->leftChild) {
-            node->parentNode->leftChild = temp;
-        }
-        else {
-            node->parentNode->rightChild = temp;
-        }
-        temp->leftChild = node;
-        node->parentNode = temp;
+    void initializeTNULL() {
+        TNULL = new RBNode("", 0, BLACK);
+        TNULL->left = nullptr;
+        TNULL->right = nullptr;
+        TNULL->parent = nullptr;
     }
 
-    // Rotate right function
-    void rotateRight(RBNode* node) {
-        RBNode* temp = node->leftChild;
-        node->leftChild = temp->rightChild;
-        if (temp->rightChild != sentinel) {
-            temp->rightChild->parentNode = node;
+    void saveNodeToFile(RBNode* node, const string& dir) {
+        if (node == TNULL) return;
+
+        if (!std::filesystem::exists(dir)) {
+            std::filesystem::create_directory(dir);
         }
-        temp->parentNode = node->parentNode;
-        if (node->parentNode == nullptr) {
-            root = temp;
+
+        string fileName = dir + "/" + node->key + ".txt";
+        ofstream file(fileName);
+        if (file) {
+            file << "Key: " << node->key << endl;
+            file << "Hash: " << node->hashValue << endl;
+            file << "Color: " << (node->color == RED ? "RED" : "BLACK") << endl;
+            file << "Left: " << (node->left != TNULL ? node->left->key : "NULL") << endl;
+            file << "Right: " << (node->right != TNULL ? node->right->key : "NULL") << endl;
+            file.close();
+            cout << "Node saved to file: " << fileName << endl;
         }
-        else if (node == node->parentNode->rightChild) {
-            node->parentNode->rightChild = temp;
-        }
-        else {
-            node->parentNode->leftChild = temp;
-        }
-        temp->rightChild = node;
-        node->parentNode = temp;
     }
 
-    // Balance the Red-Black Tree after inserting a node
-    void fixInsertion(RBNode* node) {
-        while (node != root && node->parentNode->color == true) {
-            if (node->parentNode == node->parentNode->parentNode->leftChild) {
-                RBNode* uncle = node->parentNode->parentNode->rightChild;
-                if (uncle->color == true) {
-                    node->parentNode->color = false;
-                    uncle->color = false;
-                    node->parentNode->parentNode->color = true;
-                    node = node->parentNode->parentNode;
+    void leftRotate(RBNode* x, const string& dir) {
+        RBNode* y = x->right;
+        x->right = y->left;
+        if (y->left != TNULL) {
+            y->left->parent = x;
+        }
+        y->parent = x->parent;
+        if (x->parent == nullptr) {
+            root = y;
+        }
+        else if (x == x->parent->left) {
+            x->parent->left = y;
+        }
+        else {
+            x->parent->right = y;
+        }
+        y->left = x;
+        x->parent = y;
+
+        saveNodeToFile(x, dir);
+        saveNodeToFile(y, dir);
+    }
+
+    void rightRotate(RBNode* x, const string& dir) {
+        RBNode* y = x->left;
+        x->left = y->right;
+        if (y->right != TNULL) {
+            y->right->parent = x;
+        }
+        y->parent = x->parent;
+        if (x->parent == nullptr) {
+            root = y;
+        }
+        else if (x == x->parent->right) {
+            x->parent->right = y;
+        }
+        else {
+            x->parent->left = y;
+        }
+        y->right = x;
+        x->parent = y;
+
+        saveNodeToFile(x, dir);
+        saveNodeToFile(y, dir);
+    }
+
+    void insertFix(RBNode* node, const string& dir) {
+        while (node->parent->color == RED) {
+            if (node->parent == node->parent->parent->left) {
+                RBNode* uncle = node->parent->parent->right;
+                if (uncle->color == RED) {
+                    node->parent->color = BLACK;
+                    uncle->color = BLACK;
+                    node->parent->parent->color = RED;
+                    node = node->parent->parent;
                 }
                 else {
-                    if (node == node->parentNode->rightChild) {
-                        node = node->parentNode;
-                        rotateLeft(node);
+                    if (node == node->parent->right) {
+                        node = node->parent;
+                        leftRotate(node, dir);
                     }
-                    node->parentNode->color = false;
-                    node->parentNode->parentNode->color = true;
-                    rotateRight(node->parentNode->parentNode);
+                    node->parent->color = BLACK;
+                    node->parent->parent->color = RED;
+                    rightRotate(node->parent->parent, dir);
                 }
             }
             else {
-                RBNode* uncle = node->parentNode->parentNode->leftChild;
-                if (uncle->color == true) {
-                    node->parentNode->color = false;
-                    uncle->color = false;
-                    node->parentNode->parentNode->color = true;
-                    node = node->parentNode->parentNode;
+                RBNode* uncle = node->parent->parent->left;
+                if (uncle->color == RED) {
+                    node->parent->color = BLACK;
+                    uncle->color = BLACK;
+                    node->parent->parent->color = RED;
+                    node = node->parent->parent;
                 }
                 else {
-                    if (node == node->parentNode->leftChild) {
-                        node = node->parentNode;
-                        rotateRight(node);
+                    if (node == node->parent->left) {
+                        node = node->parent;
+                        rightRotate(node, dir);
                     }
-                    node->parentNode->color = false;
-                    node->parentNode->parentNode->color = true;
-                    rotateLeft(node->parentNode->parentNode);
+                    node->parent->color = BLACK;
+                    node->parent->parent->color = RED;
+                    leftRotate(node->parent->parent, dir);
                 }
             }
         }
-        root->color = false;
+        root->color = BLACK;
     }
 
-    // Inorder traversal
-    void inorderTraversal(RBNode* node) {
-        if (node != sentinel) {
-            inorderTraversal(node->leftChild);
-            cout << node->value << " ";
-            inorderTraversal(node->rightChild);
+    void printTree(RBNode* node, string indent = "") {
+        if (node == TNULL) return;
+
+        cout << indent << "Node Key: " << node->key << ", Hash: " << node->hashValue
+            << ", Color: " << (node->color == RED ? "RED" : "BLACK") << endl;
+
+        if (node->left != TNULL) {
+            cout << indent << "Left: " << endl;
+            printTree(node->left, indent + "  ");
+        }
+        if (node->right != TNULL) {
+            cout << indent << "Right: " << endl;
+            printTree(node->right, indent + "  ");
         }
     }
-
-    // Search helper function
-    RBNode* searchNode(RBNode* node, int value) {
-        if (node == sentinel || node->value == value) {
-            return node;
-        }
-        if (value < node->value) {
-            return searchNode(node->leftChild, value);
-        }
-        return searchNode(node->rightChild, value);
-    }
- 
-
-    // Delete function to remove a value from the Red-Black Tree
-    void removeValue(int value) {
-        RBNode* z = searchValue(value);  // Find the node to delete
-        if (z == sentinel) {
-            cout << "Value not found in the tree." << endl;
-            return;
-        }
-
-        RBNode* y = z;
-        RBNode* x;
-        bool yOriginalColor = y->color;
-
-        if (z->leftChild == sentinel) {
-            x = z->rightChild;
-            transplantNodes(z, z->rightChild);
-        }
-        else if (z->rightChild == sentinel) {
-            x = z->leftChild;
-            transplantNodes(z, z->leftChild);
-        }
-        else {
-            y = treeMinimum(z->rightChild);
-            yOriginalColor = y->color;
-            x = y->rightChild;
-
-            if (y->parentNode == z) {
-                x->parentNode = y;
-            }
-            else {
-                transplantNodes(y, y->rightChild);
-                y->rightChild = z->rightChild;
-                y->rightChild->parentNode = y;
-            }
-
-            transplantNodes(z, y);
-            y->leftChild = z->leftChild;
-            y->leftChild->parentNode = y;
-            y->color = z->color;
-        }
-
-        // After deletion, we need to fix any violations of the Red-Black properties
-        if (yOriginalColor == false) {
-            fixDeletion(x);
-        }
-
-        delete z;
-    }
-
-    // Transplant helper function for node replacement
-    void transplantNodes(RBNode* oldNode, RBNode* newNode) {
-        if (oldNode->parentNode == nullptr) {
-            root = newNode;
-        }
-        else if (oldNode == oldNode->parentNode->leftChild) {
-            oldNode->parentNode->leftChild = newNode;
-        }
-        else {
-            oldNode->parentNode->rightChild = newNode;
-        }
-        newNode->parentNode = oldNode->parentNode;
-    }
-
-    // Function to find the minimum node in a subtree (used during deletion)
-    RBNode* treeMinimum(RBNode* node) {
-        while (node->leftChild != sentinel) {
-            node = node->leftChild;
-        }
-        return node;
-    }
-
-    // Fix the tree after deletion to restore Red-Black properties
-    void fixDeletion(RBNode* x) {
-        while (x != root && x->color == false) {
-            if (x == x->parentNode->leftChild) {
-                RBNode* sibling = x->parentNode->rightChild;
-                if (sibling->color == true) {
-                    sibling->color = false;
-                    x->parentNode->color = true;
-                    rotateLeft(x->parentNode);
-                    sibling = x->parentNode->rightChild;
-                }
-                if (sibling->leftChild->color == false && sibling->rightChild->color == false) {
-                    sibling->color = true;
-                    x = x->parentNode;
-                }
-                else {
-                    if (sibling->rightChild->color == false) {
-                        sibling->leftChild->color = false;
-                        sibling->color = true;
-                        rotateRight(sibling);
-                        sibling = x->parentNode->rightChild;
-                    }
-                    sibling->color = x->parentNode->color;
-                    x->parentNode->color = false;
-                    sibling->rightChild->color = false;
-                    rotateLeft(x->parentNode);
-                    x = root;
-                }
-            }
-            else {
-                RBNode* sibling = x->parentNode->leftChild;
-                if (sibling->color == true) {
-                    sibling->color = false;
-                    x->parentNode->color = true;
-                    rotateRight(x->parentNode);
-                    sibling = x->parentNode->leftChild;
-                }
-                if (sibling->rightChild->color == false && sibling->leftChild->color == false) {
-                    sibling->color = true;
-                    x = x->parentNode;
-                }
-                else {
-                    if (sibling->leftChild->color == false) {
-                        sibling->rightChild->color = false;
-                        sibling->color = true;
-                        rotateLeft(sibling);
-                        sibling = x->parentNode->leftChild;
-                    }
-                    sibling->color = x->parentNode->color;
-                    x->parentNode->color = false;
-                    sibling->leftChild->color = false;
-                    rotateRight(x->parentNode);
-                    x = root;
-                }
-            }
-        }
-        x->color = false;
-    }
-
 
 public:
-    // Constructor
     RBTree() {
-        sentinel = new RBNode(0);
-        sentinel->color = false;
-        sentinel->leftChild = sentinel->rightChild = sentinel;
-        root = sentinel;
+        initializeTNULL();
+        root = TNULL;
     }
 
-    // Insert function
-    void insertValue(int value) {
-        RBNode* newNode = new RBNode(value);
-        newNode->leftChild = sentinel;
-        newNode->rightChild = sentinel;
+    void insert(const string& key, const string& dir) override {
+        RBNode* node = new RBNode(key, hasher.computeHash(key), RED);
+        node->parent = nullptr;
+        node->left = TNULL;
+        node->right = TNULL;
 
-        RBNode* parentNode = nullptr;
-        RBNode* currentNode = root;
+        RBNode* y = nullptr;
+        RBNode* x = root;
 
-        // Standard BST insert
-        while (currentNode != sentinel) {
-            parentNode = currentNode;
-            if (newNode->value < currentNode->value) {
-                currentNode = currentNode->leftChild;
+        while (x != TNULL) {
+            y = x;
+            if (node->key < x->key) {
+                x = x->left;
             }
             else {
-                currentNode = currentNode->rightChild;
+                x = x->right;
             }
         }
 
-        newNode->parentNode = parentNode;
-
-        if (parentNode == nullptr) {
-            root = newNode;
+        node->parent = y;
+        if (y == nullptr) {
+            root = node;
         }
-        else if (newNode->value < parentNode->value) {
-            parentNode->leftChild = newNode;
+        else if (node->key < y->key) {
+            y->left = node;
         }
         else {
-            parentNode->rightChild = newNode;
+            y->right = node;
         }
 
-        if (newNode->parentNode == nullptr) {
-            newNode->color = false;
+        if (node->parent == nullptr) {
+            node->color = BLACK;
+            saveNodeToFile(node, dir);
             return;
         }
 
-        if (newNode->parentNode->parentNode == nullptr) {
+        if (node->parent->parent == nullptr) {
+            saveNodeToFile(node, dir);
             return;
         }
 
-        fixInsertion(newNode);
+        insertFix(node, dir);
+        saveNodeToFile(node, dir);
     }
 
-    // Inorder traversal
-    void inorder() {
-        inorderTraversal(root);
+    int getRootHash() override {
+        return root ? root->hashValue : 0;
     }
 
-    // Search function
-    RBNode* searchValue(int value) {
-        return searchNode(root, value);
-    }
-
-    void remove(int value)
-    {
-        removeValue(value);
+    void print() override {
+        printTree(root, "");
     }
 };
