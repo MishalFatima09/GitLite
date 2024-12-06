@@ -1,7 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
-#include "C:\Visual Studio 2022\DSA Labs\ProjectRoughWork\ProjectRoughWork\MyString.h"
+#include "MyString.h"
 //#include <string>
 #include <map>
 using namespace std;
