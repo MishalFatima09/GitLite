@@ -1,48 +1,45 @@
-#pragma once
+#include "MyMap.h"  // Custom implementation of `MyMap`
 #include <iostream>
 #include <fstream>
-#include <vector>
 #include <string>
-#include <map>
-#include <filesystem> 
-#include"AVLTree.h"
-#include"RBtree.h"
-using namespace std;
+#include <filesystem>
+#include "AVLTree.h"
+#include "RBtree.h"
 
+using namespace std;
 
 class GitLite {
 private:
-    struct Repository
-    {
+    struct Repository {
         string name;
         ColBasedTree* tree;
         string directory;
     };
 
-    map<string, Repository> repositories; // Manage multiple repositories by name
-    string currentRepository; // Name of the active repository
+    //custom map implementation 
+
+    MyMap<string, Repository> repositories; 
+
+    //identifier of the CURRENT repository
+    string currentRepository;              
+    //file to store repository information, to allow loading
     const string metadataFile = "repositories_metadata.txt";
 
-    //adding creation of tree
-
+    // Create a tree instance
     ColBasedTree* createTree(const string& type) {
         if (type == "AVL") {
             return new MerkleAVLTree();
         }
         else if (type == "RBTree") {
-            return new RBTree(); // Implement this class
+            return new RBTree();
         }
         else {
             cerr << "Unknown tree type. Defaulting to AVL." << endl;
             return new MerkleAVLTree();
         }
     }
-    /////////////////////////////////////////
-    /////////    META DATA STUFF   //////////
-    /////////////////////////////////////////
 
-
-
+    // Save repository metadata to file
     void saveMetadata() {
         ofstream out(metadataFile);
         if (!out) {
@@ -50,12 +47,13 @@ private:
             return;
         }
 
-        for (const auto& [name, repo] : repositories) {
-            out << name << "," << repo.directory << endl;
-        }
+        repositories.display([&out](const string& key, const Repository& repo) {
+            out << key << "," << repo.directory << endl;
+            });
         out.close();
     }
 
+    // Load repository metadata from file
     void loadMetadata() {
         ifstream in(metadataFile);
         if (!in) {
@@ -69,12 +67,11 @@ private:
             if (pos != string::npos) {
                 string name = line.substr(0, pos);
                 string directory = line.substr(pos + 1);
-                repositories[name] = { name, nullptr, directory };
+                repositories.insert(name, { name, nullptr, directory });
             }
         }
         in.close();
     }
-
 
     vector<string> splitLine(const string& line) {
         vector<string> result;
@@ -122,52 +119,9 @@ public:
         loadMetadata(); // Load repository metadata at startup
     }
 
-    /* void initRepository(const string& repoName, const string& inputFileName) {
-         if (repositories.find(repoName) != repositories.end()) {
-             cout << "Repository " << repoName << " already exists." << endl;
-             return;
-         }
-
-         vector<string> columnNames;
-         readCSVColumns(inputFileName, columnNames);
-         if (columnNames.empty()) {
-             cerr << "Error: No columns found in the dataset." << endl;
-             return;
-         }
-
-         int columnIndex = getColumnSelection(columnNames);
-
-         MerkleAVLTree tree;
-         ifstream file(inputFileName);
-         if (!file) {
-             cerr << "Error: Unable to open file " << inputFileName << endl;
-             return;
-         }
-
-         string line;
-         getline(file, line); // Skip the header
-
-         while (getline(file, line)) {
-             vector<string> row = splitLine(line);
-             if (columnIndex < static_cast<int>(row.size())) {
-                 tree.insert(row[columnIndex], repoName + "-branch"); // Use branch name as directory
-             }
-         }
-
-         file.close();
-
-         // Save repository details
-         Repository newRepo = { repoName, tree, repoName + "-branch" };
-         repositories[repoName] = newRepo;
-         currentRepository = repoName;
-
-         cout << "Initialized repository: " << repoName << endl;
-         cout << "Merkle Root Hash: " << tree.getRootHash() << endl;
-     }
-     */
-
     void initRepository(const string& repoName, const string& inputFileName, const string& treeType) {
-        if (repositories.find(repoName) != repositories.end()) {
+        Repository repo;
+        if (repositories.get(repoName, repo)) {
             cout << "Repository " << repoName << " already exists." << endl;
             return;
         }
@@ -205,15 +159,13 @@ public:
         }
 
         Repository newRepo = { repoName, tree, directory };
-        repositories[repoName] = newRepo;
+        repositories.insert(repoName, newRepo);
         currentRepository = repoName;
 
         saveMetadata(); // Save metadata after initializing a repository
         cout << "Initialized repository: " << repoName << endl;
         cout << "Merkle Root Hash: " << tree->getRootHash() << endl;
     }
-
-
 
     void listRepositories() {
         if (repositories.empty()) {
@@ -222,13 +174,15 @@ public:
         }
 
         cout << "Repositories:" << endl;
-        for (const auto& [name, repo] : repositories) {
-            cout << "- " << name << endl;
-        }
+        repositories.display([](const string& key, const Repository& repo) {
+            cout << "- " << key << " (" << repo.directory << ")" << endl;
+            });
     }
 
+
     void switchRepository(const string& repoName) {
-        if (repositories.find(repoName) == repositories.end()) {
+        Repository repo;
+        if (!repositories.get(repoName, repo)) {
             cout << "Repository " << repoName << " not found." << endl;
             return;
         }
@@ -238,16 +192,15 @@ public:
     }
 
     void deleteRepository(const string& repoName) {
-        auto it = repositories.find(repoName);
-        if (it == repositories.end()) {
+        Repository repo;
+        if (!repositories.get(repoName, repo)) {
             cout << "Repository " << repoName << " not found." << endl;
             return;
         }
 
-        // Remove directory from file system
-        filesystem::remove_all(it->second.directory);
+        filesystem::remove_all(repo.directory);
+        repositories.remove(repoName);
 
-        repositories.erase(it);
         if (currentRepository == repoName) {
             currentRepository.clear();
         }
@@ -269,64 +222,53 @@ public:
             return;
         }
 
-        // Check if the repository exists in the map
-        if (repositories.find(currentRepository) == repositories.end()) {
+        Repository repo;
+        if (!repositories.get(currentRepository, repo)) {
             cout << "Repository not found." << endl;
             return;
         }
 
-        // Polymorphic call to print the current repository's tree
-        repositories[currentRepository].tree->print(); // Use pointer-to-base for flexibility
+        repo.tree->print();
     }
 
-    /////////////////////////////////////////////////////
-  ///////////////     BRANCHING WORK      /////////////
-  /////////////////////////////////////////////////////
     void createBranch(const string& branchName) {
-        if (repositories.empty()) {
-            cout << "No repository initialized yet. Use `init` first." << endl;
-            return;
-        }
-        if (branchName.empty()) {
-            cout << "Branch name cannot be empty." << endl;
+        Repository repo;
+        if (!repositories.get(currentRepository, repo)) { // Use MyMap's get method
+            cout << "No active repository found. Initialize a repository first." << endl;
             return;
         }
 
-        string repoDirectory = repositories[currentRepository].directory;
+        string repoDirectory = repo.directory;
         string branchPath = repoDirectory + "/" + branchName;
 
         if (filesystem::exists(branchPath)) {
-            cout << "Branch '" << branchName << "' already exists in the repository." << endl;
+            cout << "Branch '" << branchName << "' already exists." << endl;
             return;
         }
 
-        // Create the branch folder inside the repository directory
         filesystem::create_directory(branchPath);
 
-        // Copy the repository's current contents into the branch folder
-        for (const auto& file : filesystem::directory_iterator(repoDirectory))
-        {
-            if (file.path().filename() != branchName) { // Avoid copying the branch folder into itself
-                string destination = branchPath + "/" + file.path().filename().string();
-                filesystem::copy(file.path(), destination, filesystem::copy_options::overwrite_existing);
-            }
-        }
-
-        cout << "Branch '" << branchName << "' created successfully in repository '" << currentRepository << "'." << endl;
+        cout << "Branch '" << branchName << "' created successfully." << endl;
+        saveMetadata(); // Save metadata after creating a branch
     }
 
     void checkoutBranch(const string& branchName) {
-        string repoDirectory = repositories[currentRepository].directory;
-        string branchPath = repoDirectory + "/" + branchName;
-
-        if (!filesystem::exists(branchPath)) {
-            cout << "Branch '" << branchName << "' does not exist in repository '" << currentRepository << "'." << endl;
+        Repository repo;
+        if (!repositories.get(currentRepository, repo)) { // Use MyMap's get method
+            cout << "No active repository found. Initialize a repository first." << endl;
             return;
         }
 
-        // Update the repository directory to point to the branch folder
-        repositories[currentRepository].directory = branchPath;
+        string repoDirectory = repo.directory;
+        string branchPath = repoDirectory + "/" + branchName;
 
-        cout << "Switched to branch '" << branchName << "' inside repository '" << currentRepository << "'." << endl;
+        if (!filesystem::exists(branchPath)) {
+            cout << "Branch '" << branchName << "' does not exist." << endl;
+            return;
+        }
+
+        cout << "Switched to branch '" << branchName << "'." << endl;
     }
+
+
 };

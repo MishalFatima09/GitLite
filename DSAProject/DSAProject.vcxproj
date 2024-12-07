@@ -137,6 +137,7 @@
     <ClInclude Include="BaseTree.h" />
     <ClInclude Include="GitLite.h" />
     <ClInclude Include="Hasher.h" />
+    <ClInclude Include="MyMap.h" />
     <ClInclude Include="Myvector.h" />
     <ClInclude Include="RBtree.h" />
   </ItemGroup>
