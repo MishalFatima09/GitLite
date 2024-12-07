@@ -135,6 +135,7 @@
   <ItemGroup>
     <ClInclude Include="AVLTree.h" />
     <ClInclude Include="BaseTree.h" />
+    <ClInclude Include="Btree.h" />
     <ClInclude Include="GitLite.h" />
     <ClInclude Include="Hasher.h" />
     <ClInclude Include="MyMap.h" />

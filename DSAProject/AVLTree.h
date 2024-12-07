@@ -3,27 +3,23 @@
 #include <fstream>
 #include <vector>
 #include <string>
-#include <map>
 #include <filesystem> // For directory operations
-#include "Hasher.h"   // Assuming you have a Hasher class for hashing
-#include"BaseTree.h"
+#include "BaseTree.h"
 
 using namespace std;
 
 struct AVLNode {
     string key;        // Key for this node
-    int hashValue;     // Hash value for this node
     AVLNode* left;     // Pointer to the left child
     AVLNode* right;    // Pointer to the right child
     int height;        // Height of the node
 
-    AVLNode(string k, int h) : key(k), hashValue(h), left(nullptr), right(nullptr), height(1) {}
+    AVLNode(string k) : key(k), left(nullptr), right(nullptr), height(1) {}
 };
 
 class MerkleAVLTree : public ColBasedTree {
 private:
     AVLNode* root;
-    InstructorHash hasher;
 
     int height(AVLNode* node) {
         return node ? node->height : 0;
@@ -31,22 +27,6 @@ private:
 
     void updateHeight(AVLNode* node) {
         node->height = 1 + max(height(node->left), height(node->right));
-    }
-
-    void updateHash(AVLNode* node) {
-        if (!node) return;
-
-        if (!node->left && !node->right) {
-            // Leaf node: hash is based on its key (the data itself)
-            node->hashValue = hasher.computeHash(node->key);
-        }
-        else {
-            // Internal node: combine hashes of left and right children
-            string combinedHashes = (node->left ? to_string(node->left->hashValue) : "") +
-                node->key +
-                (node->right ? to_string(node->right->hashValue) : "");
-            node->hashValue = hasher.computeHash(combinedHashes);
-        }
     }
 
     AVLNode* rightRotate(AVLNode* y, const string& dir) {
@@ -58,8 +38,6 @@ private:
 
         updateHeight(y);
         updateHeight(x);
-        updateHash(y);
-        updateHash(x);
 
         saveNodeToFile(y, dir);
         saveNodeToFile(x, dir);
@@ -76,8 +54,6 @@ private:
 
         updateHeight(x);
         updateHeight(y);
-        updateHash(x);
-        updateHash(y);
 
         saveNodeToFile(x, dir);
         saveNodeToFile(y, dir);
@@ -87,8 +63,7 @@ private:
 
     AVLNode* insertNode(AVLNode* node, const string& key, const string& dir) {
         if (node == nullptr) {
-            int hash = hasher.computeHash(key);
-            AVLNode* newNode = new AVLNode(key, hash);
+            AVLNode* newNode = new AVLNode(key);
             saveNodeToFile(newNode, dir);
             return newNode;
         }
@@ -104,7 +79,6 @@ private:
         }
 
         updateHeight(node);
-        updateHash(node);
 
         int balance = height(node->left) - height(node->right);
 
@@ -141,7 +115,6 @@ private:
         ofstream file(fileName);
         if (file) {
             file << "Key: " << node->key << endl;
-            file << "Hash: " << node->hashValue << endl;
             file << "Left: " << (node->left ? node->left->key : "NULL") << endl;
             file << "Right: " << (node->right ? node->right->key : "NULL") << endl;
             file.close();
@@ -152,7 +125,7 @@ private:
     void printTree(AVLNode* node, string indent = "") {
         if (node == nullptr) return;
 
-        cout << indent << "Node Key: " << node->key << ", Hash: " << node->hashValue << endl;
+        cout << indent << "Node Key: " << node->key << endl;
 
         if (node->left != nullptr) {
             cout << indent << "Left: " << endl;
@@ -167,17 +140,10 @@ private:
 public:
     MerkleAVLTree() : root(nullptr) {}
 
-    // Override insert method
     void insert(const string& key, const string& dir) override {
         root = insertNode(root, key, dir);
     }
 
-    // Override getRootHash method
-    int getRootHash() override {
-        return root ? root->hashValue : 0;
-    }
-
-    // Override print method
     void print() override {
         printTree(root, "");
     }

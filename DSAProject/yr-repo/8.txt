@@ -1,0 +1,5 @@
+Key: 8
+Color: RED
+Left: NULL
+Right: NULL
+Parent: 7

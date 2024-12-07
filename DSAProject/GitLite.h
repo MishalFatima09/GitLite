@@ -4,6 +4,7 @@
 #include <string>
 #include <filesystem>
 #include "AVLTree.h"
+#include"Btree.h"
 #include "RBtree.h"
 
 using namespace std;
@@ -26,12 +27,15 @@ private:
     const string metadataFile = "repositories_metadata.txt";
 
     // Create a tree instance
-    ColBasedTree* createTree(const string& type) {
+    ColBasedTree* createTree(const string& type, int t = 3) {
         if (type == "AVL") {
             return new MerkleAVLTree();
         }
         else if (type == "RBTree") {
             return new RBTree();
+        }
+        else if (type == "BTree") {
+            return new Btree(t);
         }
         else {
             cerr << "Unknown tree type. Defaulting to AVL." << endl;
@@ -53,6 +57,11 @@ private:
         out.close();
     }
 
+
+
+
+
+
     // Load repository metadata from file
     void loadMetadata() {
         ifstream in(metadataFile);
@@ -72,6 +81,10 @@ private:
         }
         in.close();
     }
+
+
+
+
 
     vector<string> splitLine(const string& line) {
         vector<string> result;
@@ -164,7 +177,7 @@ public:
 
         saveMetadata(); // Save metadata after initializing a repository
         cout << "Initialized repository: " << repoName << endl;
-        cout << "Merkle Root Hash: " << tree->getRootHash() << endl;
+       
     }
 
     void listRepositories() {

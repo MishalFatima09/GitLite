@@ -1,9 +1,9 @@
+#pragma once
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <filesystem>
-#include "BaseTree.h" 
-#include "Hasher.h"   // For hashing logic
+#include "BaseTree.h"
 
 using namespace std;
 
@@ -12,49 +12,91 @@ enum Color { RED, BLACK };
 // Red-Black Tree Node Structure
 struct RBNode {
     string key;
-    int hashValue;
     Color color; // RED or BLACK
     RBNode* left;
     RBNode* right;
     RBNode* parent;
 
-    RBNode(string k, int h, Color c) : key(k), hashValue(h), color(c), left(nullptr), right(nullptr), parent(nullptr) {}
+    RBNode(string k, Color c) : key(k), color(c), left(nullptr), right(nullptr), parent(nullptr) {}
 };
 
 class RBTree : public ColBasedTree {
 private:
     RBNode* root;
     RBNode* TNULL; // Sentinel node for null references
-    InstructorHash hasher;
 
-    void initializeTNULL() {
-        TNULL = new RBNode("", 0, BLACK);
-        TNULL->left = nullptr;
-        TNULL->right = nullptr;
-        TNULL->parent = nullptr;
-    }
-
-    void saveNodeToFile(RBNode* node, const string& dir) {
-        if (node == TNULL) return;
-
+    // Comprehensive file saving method
+    void saveTreeToFiles(const string& dir) {
+        // Ensure the directory exists
         if (!std::filesystem::exists(dir)) {
             std::filesystem::create_directory(dir);
         }
 
-        string fileName = dir + "/" + node->key + ".txt";
-        ofstream file(fileName);
-        if (file) {
-            file << "Key: " << node->key << endl;
-            file << "Hash: " << node->hashValue << endl;
-            file << "Color: " << (node->color == RED ? "RED" : "BLACK") << endl;
-            file << "Left: " << (node->left != TNULL ? node->left->key : "NULL") << endl;
-            file << "Right: " << (node->right != TNULL ? node->right->key : "NULL") << endl;
-            file.close();
-            cout << "Node saved to file: " << fileName << endl;
+        // Clear any existing files in the directory
+        for (const auto& entry : std::filesystem::directory_iterator(dir)) {
+            std::filesystem::remove(entry.path());
         }
+
+        // Save the entire tree structure recursively
+        saveNodeAndChildren(root, dir);
     }
 
+    // Recursive method to save each node and its children
+    void saveNodeAndChildren(RBNode* node, const string& dir) {
+        if (node == nullptr || node == TNULL) return;
+
+        // Create file for current node
+        string fileName = dir + "/" + node->key + ".txt";
+        ofstream file(fileName);
+
+        if (file.is_open()) {
+            // Node details
+            file << "Key: " << node->key << endl;
+            file << "Color: " << (node->color == RED ? "RED" : "BLACK") << endl;
+
+            // Left child information
+            if (node->left != nullptr && node->left != TNULL) {
+                file << "Left: " << node->left->key << endl;
+            }
+            else {
+                file << "Left: NULL" << endl;
+            }
+
+            // Right child information
+            if (node->right != nullptr && node->right != TNULL) {
+                file << "Right: " << node->right->key << endl;
+            }
+            else {
+                file << "Right: NULL" << endl;
+            }
+
+            // Parent information
+            if (node->parent != nullptr && node->parent != TNULL) {
+                file << "Parent: " << node->parent->key << endl;
+            }
+            else {
+                file << "Parent: NULL" << endl;
+            }
+
+            file.close();
+        }
+
+        // Recursively save children
+        saveNodeAndChildren(node->left, dir);
+        saveNodeAndChildren(node->right, dir);
+    }
+
+    // Initialize the TNULL node
+    void initializeTNULL() {
+        TNULL = new RBNode("", BLACK);
+        TNULL->left = TNULL;
+        TNULL->right = TNULL;
+        TNULL->parent = nullptr;
+    }
+
+    // Left rotation
     void leftRotate(RBNode* x, const string& dir) {
+        if (x == nullptr) return;
         RBNode* y = x->right;
         x->right = y->left;
         if (y->left != TNULL) {
@@ -73,11 +115,13 @@ private:
         y->left = x;
         x->parent = y;
 
-        saveNodeToFile(x, dir);
-        saveNodeToFile(y, dir);
+        // Save updated tree structure after rotation
+        saveTreeToFiles(dir);
     }
 
+    // Right rotation
     void rightRotate(RBNode* x, const string& dir) {
+        if (x == nullptr) return;
         RBNode* y = x->left;
         x->left = y->right;
         if (y->right != TNULL) {
@@ -96,12 +140,13 @@ private:
         y->right = x;
         x->parent = y;
 
-        saveNodeToFile(x, dir);
-        saveNodeToFile(y, dir);
+        // Save updated tree structure after rotation
+        saveTreeToFiles(dir);
     }
 
+    // Fix any violations of Red-Black tree properties after insertion
     void insertFix(RBNode* node, const string& dir) {
-        while (node->parent->color == RED) {
+        while (node->parent != nullptr && node->parent->color == RED) {
             if (node->parent == node->parent->parent->left) {
                 RBNode* uncle = node->parent->parent->right;
                 if (uncle->color == RED) {
@@ -138,14 +183,21 @@ private:
                     leftRotate(node->parent->parent, dir);
                 }
             }
+
+            // Prevent infinite loop
+            if (node == root) break;
         }
         root->color = BLACK;
+
+        // Save the entire tree structure after fixing
+        saveTreeToFiles(dir);
     }
 
+    // Print the tree structure
     void printTree(RBNode* node, string indent = "") {
         if (node == TNULL) return;
 
-        cout << indent << "Node Key: " << node->key << ", Hash: " << node->hashValue
+        cout << indent << "Node Key: " << node->key
             << ", Color: " << (node->color == RED ? "RED" : "BLACK") << endl;
 
         if (node->left != TNULL) {
@@ -164,8 +216,9 @@ public:
         root = TNULL;
     }
 
+    // Insert a new key into the Red-Black Tree
     void insert(const string& key, const string& dir) override {
-        RBNode* node = new RBNode(key, hasher.computeHash(key), RED);
+        RBNode* node = new RBNode(key, RED);
         node->parent = nullptr;
         node->left = TNULL;
         node->right = TNULL;
@@ -194,25 +247,22 @@ public:
             y->right = node;
         }
 
+        // Always save the entire tree structure after insertion
+        saveTreeToFiles(dir);
+
         if (node->parent == nullptr) {
             node->color = BLACK;
-            saveNodeToFile(node, dir);
             return;
         }
 
         if (node->parent->parent == nullptr) {
-            saveNodeToFile(node, dir);
             return;
         }
 
         insertFix(node, dir);
-        saveNodeToFile(node, dir);
     }
 
-    int getRootHash() override {
-        return root ? root->hashValue : 0;
-    }
-
+    // Print the tree
     void print() override {
         printTree(root, "");
     }
