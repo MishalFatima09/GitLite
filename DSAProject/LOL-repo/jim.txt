@@ -1,0 +1,4 @@
+Key: jim
+Hash: 1
+Left: NULL
+Right: pam

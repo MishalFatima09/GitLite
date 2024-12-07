@@ -1,4 +1,0 @@
-Key: 3
-Hash: 12
-Left: NULL
-Right: 5

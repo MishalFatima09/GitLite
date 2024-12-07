@@ -214,6 +214,8 @@ public:
         if (currentRepository == repoName) {
             currentRepository.clear();
         }
+
+        saveMetadata();
         cout << "Deleted repository: " << repoName << endl;
     }
 

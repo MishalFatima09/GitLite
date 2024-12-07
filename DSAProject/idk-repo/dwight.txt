@@ -1,0 +1,4 @@
+Key: dwight
+Hash: 0
+Left: NULL
+Right: NULL

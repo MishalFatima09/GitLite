@@ -1,5 +1,0 @@
-Key: 4
-Color: BLACK
-Left: 2
-Right: NULL
-Parent: 5

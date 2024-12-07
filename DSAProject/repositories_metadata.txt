@@ -1,3 +1,0 @@
-yr,yr-repo
-deleteTest,deleteTest-repo
-meow,meow-repo
