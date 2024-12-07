@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <filesystem> // For directory operations
+#include <unordered_map> // For indexing
 #include "BaseTree.h"
 
 using namespace std;
@@ -13,13 +14,15 @@ struct AVLNode {
     AVLNode* left;     // Pointer to the left child
     AVLNode* right;    // Pointer to the right child
     int height;        // Height of the node
+    bool isLazy;       // Lazy flag to indicate if the node file has been created
 
-    AVLNode(string k) : key(k), left(nullptr), right(nullptr), height(1) {}
+    AVLNode(string k) : key(k), left(nullptr), right(nullptr), height(1), isLazy(true) {}
 };
 
 class MerkleAVLTree : public ColBasedTree {
 private:
     AVLNode* root;
+    unordered_map<string, string> index;  // Index to map keys to file paths
 
     int height(AVLNode* node) {
         return node ? node->height : 0;
@@ -39,8 +42,9 @@ private:
         updateHeight(y);
         updateHeight(x);
 
-        saveNodeToFile(y, dir);
-        saveNodeToFile(x, dir);
+        // Lazily create node files
+        saveNodeIfLazy(y, dir);
+        saveNodeIfLazy(x, dir);
 
         return x;
     }
@@ -55,8 +59,9 @@ private:
         updateHeight(x);
         updateHeight(y);
 
-        saveNodeToFile(x, dir);
-        saveNodeToFile(y, dir);
+        // Lazily create node files
+        saveNodeIfLazy(x, dir);
+        saveNodeIfLazy(y, dir);
 
         return y;
     }
@@ -64,7 +69,8 @@ private:
     AVLNode* insertNode(AVLNode* node, const string& key, const string& dir) {
         if (node == nullptr) {
             AVLNode* newNode = new AVLNode(key);
-            saveNodeToFile(newNode, dir);
+            // Add node file path to the index (mapping key to file path)
+            index[key] = dir + "/" + key + ".txt";
             return newNode;
         }
 
@@ -100,26 +106,36 @@ private:
             return leftRotate(node, dir);
         }
 
-        saveNodeToFile(node, dir);
         return node;
     }
 
-    void saveNodeToFile(AVLNode* node, const string& dir) {
+    // Lazy file creation
+    void saveNodeIfLazy(AVLNode* node, const string& dir) {
         if (node == nullptr) return;
 
-        if (!std::filesystem::exists(dir)) {
-            std::filesystem::create_directory(dir);
-        }
+        if (node->isLazy) {
+            string fileName = dir + "/" + node->key + ".txt";
+            ofstream file(fileName);
+            if (file) {
+                file << "Key: " << node->key << endl;
+                file << "Left: " << (node->left ? node->left->key : "NULL") << endl;
+                file << "Right: " << (node->right ? node->right->key : "NULL") << endl;
+                file.close();
 
-        string fileName = dir + "/" + node->key + ".txt";
-        ofstream file(fileName);
-        if (file) {
-            file << "Key: " << node->key << endl;
-            file << "Left: " << (node->left ? node->left->key : "NULL") << endl;
-            file << "Right: " << (node->right ? node->right->key : "NULL") << endl;
-            file.close();
-            cout << "Node saved to file: " << fileName << endl;
+                node->isLazy = false;  // Mark the node as having its file created
+                cout << "Node file created lazily: " << fileName << endl;
+            }
         }
+    }
+
+    // Efficient search using the unordered_map index
+    bool searchNode(const string& key, string& filePath) {
+        auto it = index.find(key);  // Search in the index
+        if (it != index.end()) {
+            filePath = it->second; // Retrieve the file path if found
+            return true;
+        }
+        return false; // Key not found
     }
 
     void printTree(AVLNode* node, string indent = "") {
@@ -135,6 +151,9 @@ private:
             cout << indent << "Right: " << endl;
             printTree(node->right, indent + "  ");
         }
+
+        // Make sure to create the files lazily when printing
+        saveNodeIfLazy(node, "");
     }
 
 public:
@@ -142,6 +161,10 @@ public:
 
     void insert(const string& key, const string& dir) override {
         root = insertNode(root, key, dir);
+    }
+
+    bool search(const string& key, string& filePath) {
+        return searchNode(key, filePath);  // Try to find the key in the index
     }
 
     void print() override {
