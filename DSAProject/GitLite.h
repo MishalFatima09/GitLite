@@ -321,7 +321,7 @@ public:
             handleUpdate();
             break;
         case 3:
-            //handleInsert(tree);  // Pass the tree to handleInsert
+            handleInsert(tree);  // Pass the tree to handleInsert
             break;
         case 4:
             handleDelete();
@@ -345,9 +345,9 @@ public:
         cout << "Update records with specific conditions.\n";
     }
 
-    /*
+    
     // Handle the INSERT query
-    void handleInsert(ColBasedTree* tree) {
+    /*void handleInsert(ColBasedTree* tree) {
         string key;
         cout << "\n--- INSERT ---\n";
         cout << "Enter key for the new record: ";
@@ -368,8 +368,44 @@ public:
 
 
         cout << "Inserted " << key << " into the tree." << endl;
+    }*/
+
+    void handleInsert(ColBasedTree* tree) {
+        string key;
+        vector<string> row;
+        int rowCount;
+
+        cout << "\n--- INSERT ---\n";
+
+        // Input the key
+        cout << "Enter key for the new record: ";
+        cin >> key;
+
+        // Input the number of fields in the row
+        cout << "Enter the number of fields in the row: ";
+        cin >> rowCount;
+
+        // Input the row data
+        row.resize(rowCount);
+        cout << "Enter the row data (space-separated): ";
+        for (int i = 0; i < rowCount; ++i) {
+            cin >> row[i];
+        }
+
+        Repository repo;
+        if (repositories.get(currentRepository, repo)) {
+            string repoDirectory = repo.directory;
+
+            // Insert into the tree
+            tree->insert(key, row, rowCount, repoDirectory);
+            cout << "Inserted " << key << " into the tree with " << rowCount << " fields." << endl;
+        }
+        else {
+            cout << "Error: Current repository does not exist." << endl;
+        }
     }
-    */
+
+    
 
     // Handle the DELETE query
     void handleDelete() {

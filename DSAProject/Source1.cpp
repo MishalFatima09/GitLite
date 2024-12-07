@@ -69,7 +69,7 @@ int main() {
             gitLite.checkoutBranch(branchName);
         }
         else if (command == "queries") {
-            //gitLite.queryMenu();  // Call the query menu in GitLite
+            gitLite.queryMenu();  // Call the query menu in GitLite
         }
         else if (command == "exit") {
             break;
