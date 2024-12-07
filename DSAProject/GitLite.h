@@ -83,9 +83,6 @@ private:
     }
 
 
-
-
-
     vector<string> splitLine(const string& line) {
         vector<string> result;
         size_t start = 0, end = 0;
@@ -132,7 +129,7 @@ public:
         loadMetadata(); // Load repository metadata at startup
     }
 
-    void initRepository(const string& repoName, const string& inputFileName, const string& treeType) {
+    void initRepository(const string& repoName, const string& inputFileName, const string& treeType, int t) {
         Repository repo;
         if (repositories.get(repoName, repo)) {
             cout << "Repository " << repoName << " already exists." << endl;
