@@ -1,0 +1,4 @@
+Key: 21i-0081
+Left: 21i-0073
+Right: 21i-0089
+Row Data: Umar 21i-0081 DBMS 60 Passed 

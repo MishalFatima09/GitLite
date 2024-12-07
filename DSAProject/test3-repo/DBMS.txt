@@ -1,0 +1,4 @@
+Key: DBMS
+Left: Algo
+Right: OS
+Row Data: Ahmed 21i-0067 DBMS 90 Passed 

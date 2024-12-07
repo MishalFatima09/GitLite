@@ -201,8 +201,7 @@ private:
 
 public:
     Btree(int _t) : root(nullptr), t(_t), nextNodeId(1) {}
-
-    void insert(const string& key, const string& dir) override {
+    void insert(const string& key, const vector<string>& row, int rowCount, const string& dir)override {
         if (root == nullptr) {
             root = new BTreeNode(t, true, nextNodeId++);
             root->keys.push_back(key);

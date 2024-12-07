@@ -1,0 +1,4 @@
+Key: 21i-0085
+Left: 21i-0083
+Right: 21i-0087
+Row Data: Hadi 21i-0085 DBMS 73 Passed 

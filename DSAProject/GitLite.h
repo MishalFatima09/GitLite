@@ -4,7 +4,7 @@
 #include <string>
 #include <filesystem>
 #include "AVLTree.h"
-#include"Btree.h"
+#include "Btree.h"
 #include "RBtree.h"
 
 using namespace std;
@@ -17,13 +17,13 @@ private:
         string directory;
     };
 
-    //custom map implementation 
+    // Custom map implementation
+    MyMap<string, Repository> repositories;
 
-    MyMap<string, Repository> repositories; 
+    // Identifier of the CURRENT repository
+    string currentRepository;
 
-    //identifier of the CURRENT repository
-    string currentRepository;              
-    //file to store repository information, to allow loading
+    // File to store repository information, to allow loading
     const string metadataFile = "repositories_metadata.txt";
 
     // Create a tree instance
@@ -57,11 +57,6 @@ private:
         out.close();
     }
 
-
-
-
-
-
     // Load repository metadata from file
     void loadMetadata() {
         ifstream in(metadataFile);
@@ -81,7 +76,6 @@ private:
         }
         in.close();
     }
-
 
     vector<string> splitLine(const string& line) {
         vector<string> result;
@@ -153,13 +147,12 @@ public:
             return;
         }
 
+        vector<vector<string>> rows; // Store all rows for row count calculation
         string line;
         getline(file, line); // Skip the header
         while (getline(file, line)) {
             vector<string> row = splitLine(line);
-            if (columnIndex < static_cast<int>(row.size())) {
-                tree->insert(row[columnIndex], repoName + "-repo");
-            }
+            rows.push_back(row);
         }
         file.close();
 
@@ -168,14 +161,25 @@ public:
             filesystem::create_directory(directory);
         }
 
+        // Insert rows into the tree
+        int rowCount = 0;  // Initialize the row count
+        for (const auto& row : rows) {
+            if (columnIndex < static_cast<int>(row.size())) {
+                // Insert into the tree with all four required parameters
+                tree->insert(row[columnIndex], row, rowCount, directory);
+                rowCount++;  // Increment row count after each insertion
+            }
+        }
+
         Repository newRepo = { repoName, tree, directory };
         repositories.insert(repoName, newRepo);
         currentRepository = repoName;
 
         saveMetadata(); // Save metadata after initializing a repository
         cout << "Initialized repository: " << repoName << endl;
-       
     }
+
+
 
     void listRepositories() {
         if (repositories.empty()) {
@@ -188,7 +192,6 @@ public:
             cout << "- " << key << " (" << repo.directory << ")" << endl;
             });
     }
-
 
     void switchRepository(const string& repoName) {
         Repository repo;
@@ -282,5 +285,96 @@ public:
         cout << "Switched to branch '" << branchName << "'." << endl;
     }
 
+    /////////////////    QUERY WORK    /////////////////
 
+    ColBasedTree* getTree() {
+        Repository repo;
+        if (repositories.get(currentRepository, repo)) {
+            return repo.tree;  // Return the tree of the current repository
+        }
+        return nullptr;  // If no current repository, return nullptr
+    }
+
+    // Query menu method
+    void queryMenu() {
+        int queryChoice;
+        cout << "\n--- Queries Menu ---\n";
+        cout << "1. SELECT\n";
+        cout << "2. UPDATE\n";
+        cout << "3. INSERT\n";
+        cout << "4. DELETE\n";
+        cout << "Enter your choice: ";
+        cin >> queryChoice;
+
+        // Get the tree from GitLite
+        ColBasedTree* tree = getTree();
+        if (tree == nullptr) {
+            cout << "No repository is currently loaded.\n";
+            return;
+        }
+
+        switch (queryChoice) {
+        case 1:
+            handleSelect();
+            break;
+        case 2:
+            handleUpdate();
+            break;
+        case 3:
+            //handleInsert(tree);  // Pass the tree to handleInsert
+            break;
+        case 4:
+            handleDelete();
+            break;
+        default:
+            cout << "Invalid query option." << endl;
+        }
+    }
+
+    // Handle the SELECT query
+    void handleSelect() {
+        cout << "\n--- SELECT ---\n";
+        // Logic for SELECT query (can be expanded based on actual query needs)
+        cout << "Select records within a range or a single record.\n";
+    }
+
+    // Handle the UPDATE query
+    void handleUpdate() {
+        cout << "\n--- UPDATE ---\n";
+        // Logic for UPDATE query (can be expanded based on actual query needs)
+        cout << "Update records with specific conditions.\n";
+    }
+
+    /*
+    // Handle the INSERT query
+    void handleInsert(ColBasedTree* tree) {
+        string key;
+        cout << "\n--- INSERT ---\n";
+        cout << "Enter key for the new record: ";
+        cin >> key;
+        Repository repo;
+        // Assuming you need to specify a directory
+        //string directory = "students_data";  // Adjust the directory as needed
+
+        string repoDirectory = repo.directory;
+        // Insert into the tree
+        if (repositories.get(currentRepository, repo)) {
+            tree->insert(key, repoDirectory);
+        }
+        else
+        {
+            cout << "This repo does not exist." << endl;
+        }
+
+
+        cout << "Inserted " << key << " into the tree." << endl;
+    }
+    */
+
+    // Handle the DELETE query
+    void handleDelete() {
+        cout << "\n--- DELETE ---\n";
+        // Logic for DELETE query (can be expanded based on actual query needs)
+        cout << "Delete records based on specific conditions.\n";
+    }
 };

@@ -1,4 +1,0 @@
-Key: 33
-Hash: 20
-Left: NULL
-Right: NULL

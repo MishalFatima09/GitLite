@@ -1,0 +1,4 @@
+Key: Ahmed
+Left: NULL
+Right: NULL
+Row Data: Ahmed 21i-0067 DBMS 90 Passed 

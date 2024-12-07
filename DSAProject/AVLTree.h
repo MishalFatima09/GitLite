@@ -1,5 +1,5 @@
 #pragma once
-#include<iostream>
+#include <iostream>
 #include <fstream>
 #include <vector>
 #include <string>
@@ -9,12 +9,16 @@
 using namespace std;
 
 struct AVLNode {
-    string key;        // Key for this node
-    AVLNode* left;     // Pointer to the left child
-    AVLNode* right;    // Pointer to the right child
-    int height;        // Height of the node
+    string key;                // Key for this node
+    AVLNode* left;             // Pointer to the left child
+    AVLNode* right;            // Pointer to the right child
+    int height;                // Height of the node
+    vector<string> row;        // Row data (vector of strings)
+    int rowCount;              // Number of elements in the row
 
-    AVLNode(string k) : key(k), left(nullptr), right(nullptr), height(1) {}
+    // Constructor that initializes key and row data
+    AVLNode(string k, const vector<string>& r = {}, int count = 0)
+        : key(k), left(nullptr), right(nullptr), height(1), row(r), rowCount(count) {}
 };
 
 class MerkleAVLTree : public ColBasedTree {
@@ -61,18 +65,19 @@ private:
         return y;
     }
 
-    AVLNode* insertNode(AVLNode* node, const string& key, const string& dir) {
+    AVLNode* insertNode(AVLNode* node, const string& key, const vector<string>& row, int rowCount, const string& dir) {
         if (node == nullptr) {
-            AVLNode* newNode = new AVLNode(key);
+            // Create a new node and store row data
+            AVLNode* newNode = new AVLNode(key, row, rowCount);
             saveNodeToFile(newNode, dir);
             return newNode;
         }
 
         if (key < node->key) {
-            node->left = insertNode(node->left, key, dir);
+            node->left = insertNode(node->left, key, row, rowCount, dir);
         }
         else if (key > node->key) {
-            node->right = insertNode(node->right, key, dir);
+            node->right = insertNode(node->right, key, row, rowCount, dir);
         }
         else {
             return node; // No duplicates allowed
@@ -113,12 +118,21 @@ private:
 
         string fileName = dir + "/" + node->key + ".txt";
         ofstream file(fileName);
+
         if (file) {
             file << "Key: " << node->key << endl;
             file << "Left: " << (node->left ? node->left->key : "NULL") << endl;
             file << "Right: " << (node->right ? node->right->key : "NULL") << endl;
+
+            // Save the row data
+            file << "Row Data: ";
+            for (const auto& value : node->row) {
+                file << value << " ";  // Each element in the row separated by a space
+            }
+            file << endl;
+
             file.close();
-            cout << "Node saved to file: " << fileName << endl;
+            cout << "Node and row data saved to file: " << fileName << endl;
         }
     }
 
@@ -140,8 +154,9 @@ private:
 public:
     MerkleAVLTree() : root(nullptr) {}
 
-    void insert(const string& key, const string& dir) override {
-        root = insertNode(root, key, dir);
+    // Updated insert method to use vector<string> instead of char**
+    void insert(const string& key, const vector<string>& row, int rowCount, const string& dir) override {
+        root = insertNode(root, key, row, rowCount, dir);
     }
 
     void print() override {

@@ -86,6 +86,7 @@ private:
         saveNodeAndChildren(node->right, dir);
     }
 
+
     // Initialize the TNULL node
     void initializeTNULL() {
         TNULL = new RBNode("", BLACK);
@@ -217,7 +218,7 @@ public:
     }
 
     // Insert a new key into the Red-Black Tree
-    void insert(const string& key, const string& dir) override {
+    void insert(const string& key, const vector<string>& row, int rowCount, const string& dir) override {
         RBNode* node = new RBNode(key, RED);
         node->parent = nullptr;
         node->left = TNULL;

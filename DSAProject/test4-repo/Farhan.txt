@@ -1,0 +1,4 @@
+Key: Farhan
+Left: NULL
+Right: NULL
+Row Data: Farhan 21i-0088 DBMS 69 Passed 

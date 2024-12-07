@@ -1,0 +1,4 @@
+Key: Umar
+Left: NULL
+Right: NULL
+Row Data: Umar 21i-0081 DBMS 60 Passed 

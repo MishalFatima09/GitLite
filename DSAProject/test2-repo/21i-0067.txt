@@ -1,0 +1,4 @@
+Key: 21i-0067
+Left: 21i-0066
+Right: 21i-0068
+Row Data: Ahmed 21i-0067 DBMS 90 Passed 

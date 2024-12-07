@@ -1,4 +1,0 @@
-Key: kevin
-Hash: 14
-Left: NULL
-Right: NULL

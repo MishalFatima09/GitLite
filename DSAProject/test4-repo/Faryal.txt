@@ -1,0 +1,4 @@
+Key: Faryal
+Left: Farhan
+Right: Fatima
+Row Data: Faryal 21i-0094 DBMS 67 Passed 

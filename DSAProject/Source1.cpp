@@ -68,6 +68,9 @@ int main() {
             string branchName = command.substr(9);
             gitLite.checkoutBranch(branchName);
         }
+        else if (command == "queries") {
+            //gitLite.queryMenu();  // Call the query menu in GitLite
+        }
         else if (command == "exit") {
             break;
         }

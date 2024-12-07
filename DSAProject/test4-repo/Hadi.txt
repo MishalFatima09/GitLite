@@ -1,0 +1,4 @@
+Key: Hadi
+Left: Faiza
+Right: Hassan
+Row Data: Hadi 21i-0085 DBMS 73 Passed 

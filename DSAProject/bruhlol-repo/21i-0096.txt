@@ -1,0 +1,4 @@
+Key: 21i-0096
+Left: NULL
+Right: NULL
+Row Data: Salman 21i-0096 DBMS 80 Passed 

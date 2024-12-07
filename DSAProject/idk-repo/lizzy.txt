@@ -1,4 +1,0 @@
-Key: lizzy
-Hash: 6
-Left: NULL
-Right: NULL
