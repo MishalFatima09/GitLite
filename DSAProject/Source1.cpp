@@ -17,9 +17,9 @@ int main() {
         string command;
         cout << "> ";
         getline(cin, command);
-
+        string fileName;
         if (command.find("init ") == 0) {
-            string repoName, fileName, treeType;
+            string repoName, treeType;
             int t = 3; // Default minimum degree for BTree
 
             // Collect repository information
@@ -69,7 +69,8 @@ int main() {
             gitLite.checkoutBranch(branchName);
         }
         else if (command == "queries") {
-            gitLite.queryMenu();  // Call the query menu in GitLite
+            cout << fileName << endl;
+            gitLite.queryMenu();  
         }
         else if (command == "exit") {
             break;

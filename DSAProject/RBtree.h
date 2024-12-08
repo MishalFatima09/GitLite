@@ -16,9 +16,13 @@ struct RBNode {
     RBNode* left;
     RBNode* right;
     RBNode* parent;
+    vector<string> row; // Row data
 
-    RBNode(string k, Color c) : key(k), color(c), left(nullptr), right(nullptr), parent(nullptr) {}
+    RBNode(string k, Color c, const vector<string>& r = {})
+        : key(k), color(c), left(nullptr), right(nullptr), parent(nullptr), row(r) {
+    }
 };
+
 
 class RBTree : public ColBasedTree {
 private:
@@ -78,13 +82,63 @@ private:
                 file << "Parent: NULL" << endl;
             }
 
+            // Save the row data
+            file << "Row Data: ";
+            for (const auto& value : node->row) {
+                file << value << " "; // Each element in the row separated by a space
+            }
+            file << endl;
+
             file.close();
+            cout << "Node and row data saved to file: " << fileName << endl;
         }
 
         // Recursively save children
         saveNodeAndChildren(node->left, dir);
         saveNodeAndChildren(node->right, dir);
     }
+    void updateNode(RBNode* node, const int columnIndex, const string& newValue,
+        const int conditionIndex, const string& conditionValue, const string& dir) {
+        if (node == nullptr || node == TNULL) return;
+
+        // Check if the node meets the update condition
+        if (node->row.size() > conditionIndex && node->row[conditionIndex] == conditionValue) {
+            // Update the row data
+            if (node->row.size() > columnIndex) {
+                node->row[columnIndex] = newValue;
+                cout << "Updated node: Key = " << node->key << " ColumnIndex = " << columnIndex
+                    << " NewValue = " << newValue << endl;
+
+                // Save the updated node to its file
+                string fileName = dir + "/" + node->key + ".txt";
+                ofstream file(fileName);
+                if (file.is_open()) {
+                    file << "Key: " << node->key << endl;
+                    file << "Color: " << (node->color == RED ? "RED" : "BLACK") << endl;
+
+                    file << "Left: " << (node->left != nullptr && node->left != TNULL ? node->left->key : "NULL") << endl;
+                    file << "Right: " << (node->right != nullptr && node->right != TNULL ? node->right->key : "NULL") << endl;
+                    file << "Parent: " << (node->parent != nullptr && node->parent != TNULL ? node->parent->key : "NULL") << endl;
+
+                    file << "Row Data: ";
+                    for (const auto& value : node->row) {
+                        file << value << " ";
+                    }
+                    file << endl;
+                    file.close();
+                    cout << "Updated file: " << fileName << endl;
+                }
+            }
+            else {
+                cerr << "Invalid columnIndex: " << columnIndex << " for row data size: " << node->row.size() << endl;
+            }
+        }
+
+        // Recursively check left and right subtrees
+        updateNode(node->left, columnIndex, newValue, conditionIndex, conditionValue, dir);
+        updateNode(node->right, columnIndex, newValue, conditionIndex, conditionValue, dir);
+    }
+
 
 
     // Initialize the TNULL node
@@ -219,7 +273,7 @@ public:
 
     // Insert a new key into the Red-Black Tree
     void insert(const string& key, const vector<string>& row, int rowCount, const string& dir) override {
-        RBNode* node = new RBNode(key, RED);
+        RBNode* node = new RBNode(key, RED, row);
         node->parent = nullptr;
         node->left = TNULL;
         node->right = TNULL;
@@ -248,7 +302,7 @@ public:
             y->right = node;
         }
 
-        // Always save the entire tree structure after insertion
+        // Save tree after insertion
         saveTreeToFiles(dir);
 
         if (node->parent == nullptr) {
@@ -262,6 +316,13 @@ public:
 
         insertFix(node, dir);
     }
+
+    void update(const int columnIndex, const string& newValue,
+        const int conditionIndex, const string& conditionValue, const string& dir) override {
+        updateNode(root, columnIndex, newValue, conditionIndex, conditionValue, dir);
+    }
+
+
 
     // Print the tree
     void print() override {

@@ -1,5 +1,4 @@
 test3,test3-repo
 test4,test4-repo
 test2,test2-repo
-okay,okay-repo
-heheh,heheh-repo
+hello,hello-repo

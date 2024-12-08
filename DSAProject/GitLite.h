@@ -22,6 +22,7 @@ private:
 
     // Identifier of the CURRENT repository
     string currentRepository;
+    string currentPath;
 
     // File to store repository information, to allow loading
     const string metadataFile = "repositories_metadata.txt";
@@ -33,10 +34,10 @@ private:
         }
         else if (type == "RBTree") {
             return new RBTree();
-        }
+        }/*
         else if (type == "BTree") {
             return new Btree(t);
-        }
+        }*/
         else {
             cerr << "Unknown tree type. Defaulting to AVL." << endl;
             return new MerkleAVLTree();
@@ -129,6 +130,8 @@ public:
             cout << "Repository " << repoName << " already exists." << endl;
             return;
         }
+
+        currentPath = inputFileName;
 
         ColBasedTree* tree = createTree(treeType);
         vector<string> columnNames;
@@ -318,7 +321,8 @@ public:
             handleSelect();
             break;
         case 2:
-            handleUpdate();
+            cout << "File" << currentPath << endl;
+            handleUpdate(tree);
             break;
         case 3:
             handleInsert(tree);  // Pass the tree to handleInsert
@@ -338,37 +342,71 @@ public:
         cout << "Select records within a range or a single record.\n";
     }
 
-    // Handle the UPDATE query
-    void handleUpdate() {
-        cout << "\n--- UPDATE ---\n";
-        // Logic for UPDATE query (can be expanded based on actual query needs)
-        cout << "Update records with specific conditions.\n";
+    int getColumnIndex(const string& column, const string& fileName) {
+        ifstream file(fileName);
+        if (!file) {
+            cerr << "Error: Unable to open file " << fileName << endl;
+            return -1;
+        }
+        if (!file.is_open()) {
+            cout << "filePath: " << fileName << endl;
+            cerr << "Error: Unable to open CSV file " << fileName << endl;
+            return -1;
+        }
+
+        string headerLine;
+        if (getline(file, headerLine)) {
+            vector<string> columnNames = splitLine(headerLine); // Split the header line
+            auto it = find(columnNames.begin(), columnNames.end(), column);
+            if (it != columnNames.end()) {
+                return distance(columnNames.begin(), it);
+            }
+        }
+
+        cerr << "Error: Column " << column << " not found in the CSV file.\n";
+        return -1;
     }
 
+
+    void handleUpdate(ColBasedTree* tree/*, const string& csvFilePath*/) {
+        string setColumn, newValue, whereColumn, whereValue;
+
+        cout << "\n--- UPDATE ---\n";
+
+        // Input the column to update and its new value
+        cout << "Enter column to update (e.g., age): ";
+        cin >> setColumn;
+        cout << "Enter new value: ";
+        cin >> newValue;
+
+        // Input the condition column and its value
+        cout << "Enter condition column (e.g., name): ";
+        cin >> whereColumn;
+        cout << "Enter condition value: ";
+        cin >> whereValue;
+
+        // Get column indices using GitLite's method
+        int columnIndex = getColumnIndex(setColumn, currentPath);
+        int conditionIndex = getColumnIndex(whereColumn, currentPath);
+
+        if (columnIndex == -1 || conditionIndex == -1) 
+        {
+            cout << "Invalid column names provided.\n";
+            return;
+        }
+
+        Repository repo;
+        if (repositories.get(currentRepository, repo)) {
+            tree->update(columnIndex, newValue, conditionIndex, whereValue, repo.directory);
+            cout << "Updated " << setColumn << " to " << newValue
+                << " for records where " << whereColumn << " = " << whereValue << endl;
+        }
+        else {
+            cout << "Error: Current repository does not exist.\n";
+        }
+    }
     
     // Handle the INSERT query
-    /*void handleInsert(ColBasedTree* tree) {
-        string key;
-        cout << "\n--- INSERT ---\n";
-        cout << "Enter key for the new record: ";
-        cin >> key;
-        Repository repo;
-        // Assuming you need to specify a directory
-        //string directory = "students_data";  // Adjust the directory as needed
-
-        string repoDirectory = repo.directory;
-        // Insert into the tree
-        if (repositories.get(currentRepository, repo)) {
-            tree->insert(key, repoDirectory);
-        }
-        else
-        {
-            cout << "This repo does not exist." << endl;
-        }
-
-
-        cout << "Inserted " << key << " into the tree." << endl;
-    }*/
 
     void handleInsert(ColBasedTree* tree) {
         string key;
