@@ -311,9 +311,6 @@ private:
     }
 
 
-
-
-
 public:
     MerkleAVLTree() : root(nullptr) {}
 

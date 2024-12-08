@@ -1,4 +1,0 @@
-Key: Fatima
-Left: NULL
-Right: NULL
-Row Data: Fatima 21i-0099 DBMS 91 Passed 

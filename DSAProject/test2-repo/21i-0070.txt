@@ -1,4 +1,0 @@
-Key: 21i-0070
-Left: NULL
-Right: NULL
-Row Data: Sara 21i-0070 DBMS 92 Passed 

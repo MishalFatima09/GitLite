@@ -1,4 +1,0 @@
-Key: Zainab
-Left: Wajid
-Right: Zara
-Row Data: Zainab 21i-0080 Algo 94 Passed 

@@ -1,4 +1,0 @@
-Key: 4
-Left: 2
-Right: NULL
-Row Data: jim 0 stupid 

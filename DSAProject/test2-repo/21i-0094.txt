@@ -1,4 +1,0 @@
-Key: 21i-0094
-Left: NULL
-Right: NULL
-Row Data: Faryal 21i-0094 DBMS 67 Passed 

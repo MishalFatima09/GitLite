@@ -1,4 +1,0 @@
-Key: Asad
-Left: NULL
-Right: NULL
-Row Data: Asad 21i-0078 DBMS 86 Passed 

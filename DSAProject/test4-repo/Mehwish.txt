@@ -1,4 +1,0 @@
-Key: Mehwish
-Left: Ayesha
-Right: Sana
-Row Data: Mehwish 21i-0075 Algo 68 Passed 

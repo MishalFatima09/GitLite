@@ -332,7 +332,7 @@ public:
         // Set the current branch to the newly created branch
         repo.currentBranch = branchName;
         saveMetadata();  // Save repository metadata after creating a branch
-         cout << "Switched to branch '" << branchName << "'." <<  endl;
+        cout << "Switched to branch '" << branchName << "'." <<  endl;
     }
 
     void checkoutBranch(const string& branchName)
@@ -445,7 +445,6 @@ public:
         return -1;
     }
 
-
     void handleUpdate(ColBasedTree* tree/*, const string& csvFilePath*/) {
         string setColumn, newValue, whereColumn, whereValue;
 
@@ -519,7 +518,7 @@ public:
             tree->insert(key, row, rowCount, repoDirectory);
             cout << "Inserted " << key << " into the tree with " << rowCount << " fields." << endl;
 
-            string logEntry = "INSERT: " + key /*+ " with fields [" + join(row, ", ") + */ + "] was added at " + getCurrentTime();
+            string logEntry = "INSERT: " + key + " was added at " + getCurrentTime();
             writeLog(currentRepository, logEntry);  // Log the insert to the current branch's log file
         }
         else {

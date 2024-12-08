@@ -1,2 +1,0 @@
-UPDATE: name = jim updated age to 0 at 2024-12-08 14:06:31
-DELETE: Record with key pam was deleted at 2024-12-08 14:06:46
