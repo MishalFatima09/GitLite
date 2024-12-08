@@ -1,4 +1,0 @@
-Key: 21i-0097
-Left: 21i-0095
-Right: 21i-0099
-Row Data: Wajid 21i-0097 OS 88 Passed 

@@ -1,4 +1,0 @@
-Key: Sara
-Left: NULL
-Right: Sidra
-Row Data: Sara 21i-0070 DBMS 92 Passed 

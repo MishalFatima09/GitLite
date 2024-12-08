@@ -1,4 +1,0 @@
-Key: Adeel
-Left: NULL
-Right: NULL
-Row Data: Adeel 21i-0083 OS 79 Passed 

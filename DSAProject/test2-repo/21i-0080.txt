@@ -1,4 +1,0 @@
-Key: 21i-0080
-Left: NULL
-Right: NULL
-Row Data: Zainab 21i-0080 Algo 94 Passed 

@@ -1,4 +1,0 @@
-Key: Faiza
-Left: Bilal
-Right: Faryal
-Row Data: Faiza 21i-0089 OS 87 Passed 

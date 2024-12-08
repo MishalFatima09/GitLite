@@ -1,4 +1,0 @@
-Key: 21i-0082
-Left: NULL
-Right: NULL
-Row Data: Hamza 21i-0082 Algo 89 Passed 

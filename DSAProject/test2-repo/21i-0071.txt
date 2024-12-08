@@ -1,4 +1,0 @@
-Key: 21i-0071
-Left: 21i-0070
-Right: 21i-0072
-Row Data: Zara 21i-0071 OS 65 Passed 

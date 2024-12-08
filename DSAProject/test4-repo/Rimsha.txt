@@ -1,4 +1,0 @@
-Key: Rimsha
-Left: Owais
-Right: Saad
-Row Data: Rimsha 21i-0084 Algo 82 Passed 

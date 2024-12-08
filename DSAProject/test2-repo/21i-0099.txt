@@ -1,4 +1,0 @@
-Key: 21i-0099
-Left: 21i-0098
-Right: 21i-0100
-Row Data: Fatima 21i-0099 DBMS 91 Passed 

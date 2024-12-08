@@ -1,4 +1,0 @@
-Key: 21i-0072
-Left: NULL
-Right: NULL
-Row Data: Owais 21i-0072 Algo 45 Failed 

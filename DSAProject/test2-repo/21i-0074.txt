@@ -1,4 +1,0 @@
-Key: 21i-0074
-Left: NULL
-Right: NULL
-Row Data: Taha 21i-0074 DBMS 81 Passed 

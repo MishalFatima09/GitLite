@@ -1,4 +1,0 @@
-Key: Sana
-Left: Rimsha
-Right: Taha
-Row Data: Sana 21i-0086 OS 85 Passed 
