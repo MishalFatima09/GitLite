@@ -1,0 +1,4 @@
+Key: 7
+Left: NULL
+Right: 8
+Row Data: mer 7 crazy 

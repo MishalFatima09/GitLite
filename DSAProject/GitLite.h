@@ -2,6 +2,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include<ctime>
 #include <filesystem>
 #include "AVLTree.h"
 #include "Btree.h"
@@ -15,6 +16,7 @@ private:
         string name;
         ColBasedTree* tree;
         string directory;
+        string currentBranch;
     };
 
     // Custom map implementation
@@ -32,7 +34,7 @@ private:
         if (type == "AVL") {
             return new MerkleAVLTree();
         }
-         else if (type == "RBTree") {
+        else if (type == "RBTree") {
             return new RBTree();
         }
         else if (type == "BTree") {
@@ -118,6 +120,39 @@ private:
 
         return choice - 1;
     }
+
+    string getBranchLogFilePath(const string& branchName) {
+        // Construct the path for the log file based on the current branch
+        return currentRepository + "-repo/" + branchName + "_log.txt";
+    }
+
+    void writeLog(const string& branchName, const string& logEntry) {
+        string logFilePath = getBranchLogFilePath(branchName);
+        ofstream logFile(logFilePath, ios::app); // Open file in append mode
+
+        if (logFile.is_open()) {
+            logFile << logEntry << endl;
+            logFile.close();
+            cout << "Log entry added to " << logFilePath << endl;
+        }
+        else {
+            cerr << "Error: Unable to open log file " << logFilePath << endl;
+        }
+    }
+
+    string getCurrentTime() {
+        time_t now = time(0);
+        struct tm timeInfo;
+
+        // Use localtime_s instead of localtime to avoid the warning
+        localtime_s(&timeInfo, &now); // Thread-safe version of localtime
+
+        char buffer[80];
+        strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", &timeInfo);  // Format the time
+
+        return string(buffer);
+    }
+
 
 public:
     GitLite() {
@@ -205,6 +240,7 @@ public:
 
         currentRepository = repoName;
         cout << "Switched to repository: " << repoName << endl;
+
     }
 
     void deleteRepository(const string& repoName) {
@@ -249,30 +285,61 @@ public:
         repo.tree->print();
     }
 
-    void createBranch(const string& branchName) {
+    void createBranch(const  string& branchName) {
         Repository repo;
-        if (!repositories.get(currentRepository, repo)) { // Use MyMap's get method
-            cout << "No active repository found. Initialize a repository first." << endl;
+        if (!repositories.get(currentRepository, repo)) {
+             cout << "No active repository found. Initialize a repository first." <<  endl;
             return;
         }
 
-        string repoDirectory = repo.directory;
-        string branchPath = repoDirectory + "/" + branchName;
+         string repoDirectory = repo.directory;
+         string branchPath = repoDirectory + "/" + branchName;
 
-        if (filesystem::exists(branchPath)) {
-            cout << "Branch '" << branchName << "' already exists." << endl;
+        if ( std::filesystem::exists(branchPath)) {
+             cout << "Branch '" << branchName << "' already exists." <<  endl;
             return;
         }
 
-        filesystem::create_directory(branchPath);
+        // Create the new branch directory
+        std::filesystem::create_directory(branchPath);
 
-        cout << "Branch '" << branchName << "' created successfully." << endl;
-        saveMetadata(); // Save metadata after creating a branch
+        // Copy the repository's current contents into the branch folder
+        try {
+            for (const auto& file : std::filesystem::directory_iterator(repoDirectory)) {
+                // Avoid copying the branch folder into itself
+                if (file.path().filename() != branchName) {
+                    string destination = branchPath + "/" + file.path().filename().string();
+
+                    // Remove the destination file if it already exists
+                    if (std::filesystem::exists(destination)) {
+                        std::filesystem::remove(destination);
+                         cout << "Removed existing file: " << destination <<  endl;
+                    }
+
+                    // Copy the file, overwriting if it already exists
+                    std::filesystem::copy(file.path(), destination, std::filesystem::copy_options::overwrite_existing);
+                    cout << "Copied: " << file.path() << " to " << destination <<  endl;
+                }
+            }
+
+             cout << "Branch '" << branchName << "' created and files copied successfully." <<  endl;
+        }
+        catch (const  std::filesystem::filesystem_error& e) {
+             cout << "Error copying files: " << e.what() <<  endl;
+            return;
+        }
+
+        // Set the current branch to the newly created branch
+        repo.currentBranch = branchName;
+        saveMetadata();  // Save repository metadata after creating a branch
+         cout << "Switched to branch '" << branchName << "'." <<  endl;
     }
 
-    void checkoutBranch(const string& branchName) {
+    void checkoutBranch(const string& branchName)
+    {
         Repository repo;
-        if (!repositories.get(currentRepository, repo)) { // Use MyMap's get method
+        if (!repositories.get(currentRepository, repo))
+        {
             cout << "No active repository found. Initialize a repository first." << endl;
             return;
         }
@@ -285,8 +352,14 @@ public:
             return;
         }
 
+        // Switch to the selected branch (simply set the current branch name)
+        repo.currentBranch = branchName;
+
+        // Optionally, handle additional tasks such as setting up trees or reloading data if necessary
+
         cout << "Switched to branch '" << branchName << "'." << endl;
     }
+
 
     /////////////////    QUERY WORK    /////////////////
 
@@ -394,7 +467,7 @@ public:
         int columnIndex = getColumnIndex(setColumn, currentPath);
         int conditionIndex = getColumnIndex(whereColumn, currentPath);
 
-        if (columnIndex == -1 || conditionIndex == -1) 
+        if (columnIndex == -1 || conditionIndex == -1)
         {
             cout << "Invalid column names provided.\n";
             return;
@@ -405,12 +478,15 @@ public:
             tree->update(columnIndex, newValue, conditionIndex, whereValue, repo.directory);
             cout << "Updated " << setColumn << " to " << newValue
                 << " for records where " << whereColumn << " = " << whereValue << endl;
+
+            string logEntry = "UPDATE: " + whereColumn + " = " + whereValue + " updated " + setColumn + " to " + newValue + " at " + getCurrentTime();
+            writeLog(currentRepository, logEntry);  // Log the update to the current branch's log file
         }
         else {
             cout << "Error: Current repository does not exist.\n";
         }
     }
-    
+
     // Handle the INSERT query
 
     void handleInsert(ColBasedTree* tree) {
@@ -442,13 +518,16 @@ public:
             // Insert into the tree
             tree->insert(key, row, rowCount, repoDirectory);
             cout << "Inserted " << key << " into the tree with " << rowCount << " fields." << endl;
+
+            string logEntry = "INSERT: " + key /*+ " with fields [" + join(row, ", ") + */ + "] was added at " + getCurrentTime();
+            writeLog(currentRepository, logEntry);  // Log the insert to the current branch's log file
         }
         else {
             cout << "Error: Current repository does not exist." << endl;
         }
     }
 
-    
+
 
     // Handle the DELETE query
     void handleDelete(ColBasedTree* tree, const string& repoDirectory) {
@@ -467,6 +546,9 @@ public:
             // Call the tree's remove function for a single key
             tree->remove(key, repoDirectory);
             cout << "Record with key \"" << key << "\" has been deleted.\n";
+
+            string logEntry = "DELETE: Record with key " + key + " was deleted at " + getCurrentTime();
+            writeLog(currentRepository, logEntry);  // Log the delete to the current branch's log file
         }
         else if (choice == 2) {
             string startKey, endKey;
@@ -478,6 +560,9 @@ public:
             // Call the tree's range-based remove function
             tree->removeRange(startKey, endKey, repoDirectory);
             cout << "Records with keys between \"" << startKey << "\" and \"" << endKey << "\" have been deleted.\n";
+
+            string logEntry = "DELETE RANGE: Records with keys between " + startKey + " and " + endKey + " were deleted at " + getCurrentTime();
+            writeLog(currentRepository, logEntry);  // Log the range delete to the
         }
         else {
             cout << "Invalid choice. Aborting delete operation.\n";
