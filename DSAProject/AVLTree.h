@@ -182,6 +182,136 @@ private:
     }
 
 
+    AVLNode* minValueNode(AVLNode* node) {
+        AVLNode* current = node;
+        while (current->left != nullptr) {
+            current = current->left;
+        }
+        return current;
+    }
+
+    AVLNode* deleteNode(AVLNode* root, const string& key, const string& dir) {
+        if (root == nullptr) return root;
+
+        if (key < root->key) {
+            root->left = deleteNode(root->left, key, dir);
+        }
+        else if (key > root->key) {
+            root->right = deleteNode(root->right, key, dir);
+        }
+        else {
+            // Node to be deleted found
+            // Delete the corresponding file
+            string fileName = dir + "/" + root->key + ".txt";
+            if (std::filesystem::exists(fileName)) {
+                std::filesystem::remove(fileName);
+                cout << "Deleted file: " << fileName << endl;
+            }
+
+            // Case: Node with one child or no child
+            if (root->left == nullptr || root->right == nullptr) {
+                AVLNode* temp = root->left ? root->left : root->right;
+                delete root;
+                return temp;
+            }
+
+            // Case: Node with two children
+            AVLNode* temp = minValueNode(root->right);
+            root->key = temp->key;
+            root->row = temp->row; // Copy row data
+            root->rowCount = temp->rowCount;
+            root->right = deleteNode(root->right, temp->key, dir);
+        }
+
+        // Update height and balance the tree
+        updateHeight(root);
+        int balance = height(root->left) - height(root->right);
+
+        // Left-heavy
+        if (balance > 1) {
+            if (height(root->left->left) >= height(root->left->right)) {
+                return rightRotate(root, dir);
+            }
+            else {
+                root->left = leftRotate(root->left, dir);
+                return rightRotate(root, dir);
+            }
+        }
+
+        // Right-heavy
+        if (balance < -1) {
+            if (height(root->right->right) >= height(root->right->left)) {
+                return leftRotate(root, dir);
+            }
+            else {
+                root->right = rightRotate(root->right, dir);
+                return leftRotate(root, dir);
+            }
+        }
+
+        return root;
+    }
+
+
+    AVLNode* removeRangeHelper(AVLNode* node, const string& startKey, const string& endKey, const string& dir) {
+        if (node == nullptr) return nullptr;
+
+        // Recur for the left subtree if startKey is smaller
+        if (startKey < node->key) {
+            node->left = removeRangeHelper(node->left, startKey, endKey, dir);
+        }
+
+        // Recur for the right subtree if endKey is greater
+        if (endKey > node->key) {
+            node->right = removeRangeHelper(node->right, startKey, endKey, dir);
+        }
+
+        // If the current node's key is within the range, delete it
+        if (startKey <= node->key && node->key <= endKey) {
+            string fileName = dir + "/" + node->key + ".txt";
+            if (std::filesystem::exists(fileName)) {
+                std::filesystem::remove(fileName); // Delete the corresponding file
+                cout << "Deleted file: " << fileName << endl;
+            }
+
+            // Standard AVL delete logic for this node
+            if (node->left == nullptr || node->right == nullptr) {
+                AVLNode* temp = node->left ? node->left : node->right;
+                delete node;
+                return temp;
+            }
+            else {
+                AVLNode* temp = minValueNode(node->right);
+                node->key = temp->key;
+                node->row = temp->row; // Copy row data
+                node->right = removeRangeHelper(node->right, temp->key, temp->key, dir);
+            }
+        }
+
+        updateHeight(node);
+
+        // Balance the node if necessary
+        int balance = height(node->left) - height(node->right);
+        if (balance > 1 && height(node->left->left) >= height(node->left->right)) {
+            return rightRotate(node, dir);
+        }
+        if (balance > 1 && height(node->left->left) < height(node->left->right)) {
+            node->left = leftRotate(node->left, dir);
+            return rightRotate(node, dir);
+        }
+        if (balance < -1 && height(node->right->right) >= height(node->right->left)) {
+            return leftRotate(node, dir);
+        }
+        if (balance < -1 && height(node->right->right) < height(node->right->left)) {
+            node->right = rightRotate(node->right, dir);
+            return leftRotate(node, dir);
+        }
+
+        return node;
+    }
+
+
+
 
 
 public:
@@ -193,10 +323,20 @@ public:
     }
 
     void update(const int columnIndex, const string& newValue,
-        const int conditionIndex, const string& conditionValue, const string& dir) {
+        const int conditionIndex, const string& conditionValue, const string& dir) override {
         // Traverse and update nodes
         updateNode(root, columnIndex, newValue, conditionIndex, conditionValue, dir);
     }
+
+    void remove(const string& key, const string& dir) override {
+        root = deleteNode(root, key, dir);
+        cout << "Deleted node with key: " << key << endl;
+    }
+
+    void removeRange(const string& startKey, const string& endKey, const string& dir) override {
+        root = removeRangeHelper(root, startKey, endKey, dir);
+    }
+
 
     void print() override {
         printTree(root, "");

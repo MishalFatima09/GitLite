@@ -14,5 +14,7 @@ public:
     virtual void update(const int columnIndex, const string& newValue,
         const int conditionIndex, const string& conditionValue, const string& dir) = 0;
     virtual void print() = 0;
+    virtual void remove(const string& key, const string& dir) = 0;
+    virtual void removeRange(const string& startKey, const string& endKey, const string& dir) = 0;
     virtual ~ColBasedTree() = default;
 };

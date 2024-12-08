@@ -264,6 +264,164 @@ private:
             printTree(node->right, indent + "  ");
         }
     }
+    ///deletion
+    RBNode* minValueNode(RBNode* node) {
+        while (node->left != TNULL) {
+            node = node->left;
+        }
+        return node;
+    }
+    void deleteFix(RBNode* x, const string& dir) {
+        while (x != root && x->color == BLACK) {
+            if (x == x->parent->left) {
+                RBNode* sibling = x->parent->right;
+                if (sibling->color == RED) {
+                    sibling->color = BLACK;
+                    x->parent->color = RED;
+                    leftRotate(x->parent, dir);
+                    sibling = x->parent->right;
+                }
+                if (sibling->left->color == BLACK && sibling->right->color == BLACK) {
+                    sibling->color = RED;
+                    x = x->parent;
+                }
+                else {
+                    if (sibling->right->color == BLACK) {
+                        sibling->left->color = BLACK;
+                        sibling->color = RED;
+                        rightRotate(sibling, dir);
+                        sibling = x->parent->right;
+                    }
+                    sibling->color = x->parent->color;
+                    x->parent->color = BLACK;
+                    sibling->right->color = BLACK;
+                    leftRotate(x->parent, dir);
+                    x = root;
+                }
+            }
+            else {
+                RBNode* sibling = x->parent->left;
+                if (sibling->color == RED) {
+                    sibling->color = BLACK;
+                    x->parent->color = RED;
+                    rightRotate(x->parent, dir);
+                    sibling = x->parent->left;
+                }
+                if (sibling->right->color == BLACK && sibling->left->color == BLACK) {
+                    sibling->color = RED;
+                    x = x->parent;
+                }
+                else {
+                    if (sibling->left->color == BLACK) {
+                        sibling->right->color = BLACK;
+                        sibling->color = RED;
+                        leftRotate(sibling, dir);
+                        sibling = x->parent->left;
+                    }
+                    sibling->color = x->parent->color;
+                    x->parent->color = BLACK;
+                    sibling->left->color = BLACK;
+                    rightRotate(x->parent, dir);
+                    x = root;
+                }
+            }
+        }
+        x->color = BLACK;
+    }
+    RBNode* deleteNode(RBNode* root, const string& key, const string& dir) {
+        if (root == TNULL || root == nullptr) return root;
+
+        if (key < root->key) {
+            root->left = deleteNode(root->left, key, dir);
+        }
+        else if (key > root->key) {
+            root->right = deleteNode(root->right, key, dir);
+        }
+        else {
+            // Node to be deleted found
+            RBNode* temp;
+            string fileName = dir + "/" + root->key + ".txt";
+
+            // Remove the file
+            if (std::filesystem::exists(fileName)) {
+                std::filesystem::remove(fileName);
+                cout << "Deleted file: " << fileName << endl;
+            }
+
+            if (root->left == TNULL) {
+                temp = root->right;
+                delete root;
+                return temp;
+            }
+            else if (root->right == TNULL) {
+                temp = root->left;
+                delete root;
+                return temp;
+            }
+
+            temp = minValueNode(root->right);
+            root->key = temp->key;
+            root->row = temp->row; // Copy row data
+            root->right = deleteNode(root->right, temp->key, dir);
+        }
+
+        return root;
+    }
+
+
+    RBNode* removeRangeHelper(RBNode* node, const string& startKey, const string& endKey, const string& dir) {
+        if (node == TNULL || node == nullptr) {
+            return node;
+        }
+
+        // Recur to the left subtree if the startKey is less than the current node's key
+        if (startKey < node->key) {
+            node->left = removeRangeHelper(node->left, startKey, endKey, dir);
+        }
+
+        // Recur to the right subtree if the endKey is greater than the current node's key
+        if (endKey > node->key) {
+            node->right = removeRangeHelper(node->right, startKey, endKey, dir);
+        }
+
+        // Check if the current node's key falls within the range [startKey, endKey]
+        if (startKey <= node->key && node->key <= endKey) {
+            // Delete the current node and return the new subtree root
+            string fileName = dir + "/" + node->key + ".txt";
+
+            // Remove the file associated with this node
+            if (std::filesystem::exists(fileName)) {
+                std::filesystem::remove(fileName);
+                cout << "Deleted file: " << fileName << endl;
+            }
+
+            // Now, delete the node and adjust the tree structure
+            if (node->left == TNULL) {
+                RBNode* temp = node->right;
+                delete node;
+                return temp;
+            }
+            else if (node->right == TNULL) {
+                RBNode* temp = node->left;
+                delete node;
+                return temp;
+            }
+
+            // If the node has two children, replace it with the in-order successor
+            RBNode* temp = minValueNode(node->right);
+            node->key = temp->key;
+            node->row = temp->row; // Copy row data
+            node->right = deleteNode(node->right, temp->key, dir);
+        }
+
+        return node;
+    }
+
+
+
+
+
+
 
 public:
     RBTree() {
@@ -322,7 +480,13 @@ public:
         updateNode(root, columnIndex, newValue, conditionIndex, conditionValue, dir);
     }
 
-
+    void remove(const string& key, const string& dir) override {
+        root = deleteNode(root, key, dir);
+        cout << "Deleted node with key: " << key << endl;
+    }
+    void removeRange(const string& startKey, const string& endKey, const string& dir) override {
+        root = removeRangeHelper(root, startKey, endKey, dir);
+    }
 
     // Print the tree
     void print() override {

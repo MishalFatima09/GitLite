@@ -32,12 +32,12 @@ private:
         if (type == "AVL") {
             return new MerkleAVLTree();
         }
-        else if (type == "RBTree") {
+         else if (type == "RBTree") {
             return new RBTree();
-        }/*
+        }
         else if (type == "BTree") {
             return new Btree(t);
-        }*/
+        }
         else {
             cerr << "Unknown tree type. Defaulting to AVL." << endl;
             return new MerkleAVLTree();
@@ -315,7 +315,7 @@ public:
             cout << "No repository is currently loaded.\n";
             return;
         }
-
+        Repository repo;
         switch (queryChoice) {
         case 1:
             handleSelect();
@@ -328,7 +328,12 @@ public:
             handleInsert(tree);  // Pass the tree to handleInsert
             break;
         case 4:
-            handleDelete();
+            if (repositories.get(currentRepository, repo)) {
+                handleDelete(repo.tree, repo.directory);
+            }
+            else {
+                cout << "No active repository for deletion.\n";
+            }
             break;
         default:
             cout << "Invalid query option." << endl;
@@ -446,9 +451,38 @@ public:
     
 
     // Handle the DELETE query
-    void handleDelete() {
+    void handleDelete(ColBasedTree* tree, const string& repoDirectory) {
+        int choice;
         cout << "\n--- DELETE ---\n";
-        // Logic for DELETE query (can be expanded based on actual query needs)
-        cout << "Delete records based on specific conditions.\n";
+        cout << "1. Delete a single record\n";
+        cout << "2. Delete records within a range\n";
+        cout << "Enter your choice: ";
+        cin >> choice;
+
+        if (choice == 1) {
+            string key;
+            cout << "Enter key of the record to delete: ";
+            cin >> key;
+
+            // Call the tree's remove function for a single key
+            tree->remove(key, repoDirectory);
+            cout << "Record with key \"" << key << "\" has been deleted.\n";
+        }
+        else if (choice == 2) {
+            string startKey, endKey;
+            cout << "Enter the start key: ";
+            cin >> startKey;
+            cout << "Enter the end key: ";
+            cin >> endKey;
+
+            // Call the tree's range-based remove function
+            tree->removeRange(startKey, endKey, repoDirectory);
+            cout << "Records with keys between \"" << startKey << "\" and \"" << endKey << "\" have been deleted.\n";
+        }
+        else {
+            cout << "Invalid choice. Aborting delete operation.\n";
+        }
     }
+
+
 };
