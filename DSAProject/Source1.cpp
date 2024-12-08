@@ -69,7 +69,6 @@ int main() {
             gitLite.checkoutBranch(branchName);
         }
         else if (command == "queries") {
-            cout << fileName << endl;
             gitLite.queryMenu();  
         }
         else if (command == "exit") {
