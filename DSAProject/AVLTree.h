@@ -65,6 +65,18 @@ private:
         return y;
     }
 
+    vector<string> splitLine(const string& line) {
+        vector<string> result;
+        size_t start = 0, end = 0;
+
+        while ((end = line.find(',', start)) != string::npos) {
+            result.push_back(line.substr(start, end - start));
+            start = end + 1;
+        }
+        result.push_back(line.substr(start));
+        return result;
+    }
+
     AVLNode* insertNode(AVLNode* node, const string& key, const vector<string>& row, int rowCount, const string& dir) {
         if (node == nullptr) {
             // Create a new node and store row data
@@ -151,12 +163,39 @@ private:
         }
     }
 
+    void updateNode(AVLNode* node, const int columnIndex, const string& newValue,
+        const int conditionIndex, const string& conditionValue, const string& dir) {
+        if (node == nullptr) return;
+
+        // Apply the update if the condition matches
+        if (node->row[conditionIndex] == conditionValue) {
+            node->row[columnIndex] = newValue;
+            cout << "Updated node: Key = " << node->key << endl;
+
+            // Save the updated node to the file
+            saveNodeToFile(node, dir);
+        }
+
+        // Recur for left and right children
+        updateNode(node->left, columnIndex, newValue, conditionIndex, conditionValue, dir);
+        updateNode(node->right, columnIndex, newValue, conditionIndex, conditionValue, dir);
+    }
+
+
+
+
 public:
     MerkleAVLTree() : root(nullptr) {}
 
     // Updated insert method to use vector<string> instead of char**
     void insert(const string& key, const vector<string>& row, int rowCount, const string& dir) override {
         root = insertNode(root, key, row, rowCount, dir);
+    }
+
+    void update(const int columnIndex, const string& newValue,
+        const int conditionIndex, const string& conditionValue, const string& dir) {
+        // Traverse and update nodes
+        updateNode(root, columnIndex, newValue, conditionIndex, conditionValue, dir);
     }
 
     void print() override {

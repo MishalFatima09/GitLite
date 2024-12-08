@@ -2,4 +2,7 @@
 C:\Users\hp\source\repos\DSAProject\DSAProject\Btree.h(92,15): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
   (compiling source file 'Source1.cpp')
   
+C:\Users\hp\source\repos\DSAProject\DSAProject\GitLite.h(362,32): warning C4244: 'return': conversion from '__int64' to 'int', possible loss of data
+  (compiling source file 'Source1.cpp')
+  
   DSAProject.vcxproj -> C:\Users\hp\source\repos\DSAProject\x64\Debug\DSAProject.exe
