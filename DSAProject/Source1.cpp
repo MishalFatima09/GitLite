@@ -76,7 +76,7 @@ int main() {
             break;
         }
         else {
-            cout << "Unknown command. Try init, list-repos, switch, delete, current-repo, print-tree, or exit." << endl;
+            cout << "Unknown command. Try init, list-repos, switch, delete, current-repo, queries, print-tree, or exit." << endl;
         }
     }
 
