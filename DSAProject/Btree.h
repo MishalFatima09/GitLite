@@ -242,6 +242,19 @@ public:
             cout << "The tree is empty!" << endl;
         }
     }
+    void update(const int columnIndex, const string& newValue,
+        const int conditionIndex, const string& conditionValue, const string& dir) override
+    {
+        cout << "yet to be implementded." << endl;
+    }
+
+    void removeRange(const string& startKey, const string& endKey, const string& dir) override {
+       // root = removeRangeHelper(root, startKey, endKey, dir);
+    }
+
+    void remove(const string& key, const string& dir) override {
+        cout << "Deleted node with key: " << key << endl;
+    }
 
     ~Btree() {
         // Recursively delete all nodes to prevent memory leaks
