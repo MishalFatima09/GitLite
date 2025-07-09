@@ -28,10 +28,12 @@ cd GitLite
 ```
 
 ### 2. Sample Commands:
+```bash
 > gitlite init
 > gitlite add file.txt
 > gitlite commit -m "Initial commit"
 > gitlite log
+```
 
 ## 🤝 Collaborators
 
