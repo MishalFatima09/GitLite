@@ -25,6 +25,7 @@ This project was created as part of an academic assignment to implement the logi
 ```bash
 git clone https://github.com/MishalFatima09/GitLite.git
 cd GitLite
+```
 
 ### 2. Sample Commands:
 > gitlite init
